@@ -1,8 +1,7 @@
 
 import React from "react";
-import { Sidebar } from "../ui/sidebar";
-import { Navbar } from "./Navbar";
 import { SidebarMenu } from "./SidebarMenu";
+import { Navbar } from "./Navbar";
 import { useAuth } from "@/contexts/AuthContext";
 import { Navigate } from "react-router-dom";
 
@@ -30,7 +29,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   return (
     <div className="min-h-screen flex w-full bg-background text-foreground">
       <SidebarMenu />
-      <div className="flex flex-col flex-1">
+      <div className="flex flex-col flex-1 md:ml-64">
         <Navbar />
         <main className="flex-1 p-4 md:p-6 overflow-auto animate-fade-in">
           {children}
