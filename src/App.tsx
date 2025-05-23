@@ -20,9 +20,12 @@ import Dashboard from "./pages/dashboard/Dashboard";
 // Client Pages
 import ClientList from "./pages/clients/ClientList";
 import ClientForm from "./pages/clients/ClientForm";
+import ClientDetail from "./pages/clients/ClientDetail";
 
 // Vehicle Pages
 import VehicleList from "./pages/vehicles/VehicleList";
+import VehicleForm from "./pages/vehicles/VehicleForm";
+import VehicleDetail from "./pages/vehicles/VehicleDetail";
 
 // Shared Pages
 import NotFound from "./pages/NotFound";
@@ -51,10 +54,14 @@ const App = () => (
             {/* Client Routes */}
             <Route path="/clients" element={<ClientList />} />
             <Route path="/clients/new" element={<ClientForm />} />
+            <Route path="/clients/:id" element={<ClientDetail />} />
             <Route path="/clients/:id/edit" element={<ClientForm />} />
             
             {/* Vehicle Routes */}
             <Route path="/vehicles" element={<VehicleList />} />
+            <Route path="/vehicles/new" element={<VehicleForm />} />
+            <Route path="/vehicles/:id" element={<VehicleDetail />} />
+            <Route path="/vehicles/:id/edit" element={<VehicleForm />} />
             
             {/* Catch-all Route */}
             <Route path="*" element={<NotFound />} />

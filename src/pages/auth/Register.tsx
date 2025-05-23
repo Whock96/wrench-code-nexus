@@ -11,7 +11,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 
 const Register: React.FC = () => {
-  const { signup } = useAuth();
+  const { register } = useAuth();
   const { toast } = useToast();
   
   const [step, setStep] = useState(1);
@@ -95,7 +95,7 @@ const Register: React.FC = () => {
     
     setIsLoading(true);
     try {
-      await signup(formData.email, formData.password, formData.firstName, formData.lastName);
+      await register(formData.email, formData.password, `${formData.firstName} ${formData.lastName}`);
       toast({
         title: "Registration successful!",
         description: "Your account has been created. You can now login.",

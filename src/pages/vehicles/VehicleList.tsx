@@ -12,7 +12,10 @@ import { toast } from "@/components/ui/use-toast";
 import { Tables } from "@/integrations/supabase/types";
 
 type Vehicle = Tables<"vehicles"> & {
-  customers?: Tables<"customers">;
+  customers?: {
+    id: string;
+    name: string;
+  } | null;
 };
 
 const VehicleList: React.FC = () => {
