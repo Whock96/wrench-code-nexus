@@ -27,6 +27,10 @@ import VehicleList from "./pages/vehicles/VehicleList";
 import VehicleForm from "./pages/vehicles/VehicleForm";
 import VehicleDetail from "./pages/vehicles/VehicleDetail";
 
+// Service Order Pages
+import ServiceOrderList from "./pages/service-orders/ServiceOrderList";
+import ServiceOrderForm from "./pages/service-orders/ServiceOrderForm";
+
 // Shared Pages
 import NotFound from "./pages/NotFound";
 
@@ -62,6 +66,11 @@ const App = () => (
             <Route path="/vehicles/new" element={<VehicleForm />} />
             <Route path="/vehicles/:id" element={<VehicleDetail />} />
             <Route path="/vehicles/:id/edit" element={<VehicleForm />} />
+            
+            {/* Service Order Routes */}
+            <Route path="/service-orders" element={<ServiceOrderList />} />
+            <Route path="/service-orders/new" element={<ServiceOrderForm />} />
+            <Route path="/service-orders/:id/edit" element={<ServiceOrderForm />} />
             
             {/* Catch-all Route */}
             <Route path="*" element={<NotFound />} />

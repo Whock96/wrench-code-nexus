@@ -54,7 +54,8 @@ export const SidebarMenu: React.FC = () => {
       <nav className="flex-1 space-y-2 p-4">
         {menuItems.map((item) => {
           const Icon = item.icon;
-          const isActive = location.pathname === item.href;
+          const isActive = location.pathname === item.href || 
+            (item.href !== "/dashboard" && location.pathname.startsWith(item.href));
           
           return (
             <Link

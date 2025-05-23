@@ -94,6 +94,156 @@ export type Database = {
           },
         ]
       }
+      service_items: {
+        Row: {
+          created_at: string | null
+          description: string
+          id: string
+          item_type: string
+          quantity: number
+          service_order_id: string
+          total_price: number | null
+          unit_price: number
+        }
+        Insert: {
+          created_at?: string | null
+          description: string
+          id?: string
+          item_type: string
+          quantity?: number
+          service_order_id: string
+          total_price?: number | null
+          unit_price: number
+        }
+        Update: {
+          created_at?: string | null
+          description?: string
+          id?: string
+          item_type?: string
+          quantity?: number
+          service_order_id?: string
+          total_price?: number | null
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_items_service_order_id_fkey"
+            columns: ["service_order_id"]
+            isOneToOne: false
+            referencedRelation: "service_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_order_status_history: {
+        Row: {
+          change_reason: string | null
+          changed_at: string | null
+          changed_by: string | null
+          id: string
+          service_order_id: string
+          status: string
+        }
+        Insert: {
+          change_reason?: string | null
+          changed_at?: string | null
+          changed_by?: string | null
+          id?: string
+          service_order_id: string
+          status: string
+        }
+        Update: {
+          change_reason?: string | null
+          changed_at?: string | null
+          changed_by?: string | null
+          id?: string
+          service_order_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_order_status_history_changed_by_fkey"
+            columns: ["changed_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_order_status_history_service_order_id_fkey"
+            columns: ["service_order_id"]
+            isOneToOne: false
+            referencedRelation: "service_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_orders: {
+        Row: {
+          created_at: string | null
+          customer_id: string
+          description: string | null
+          estimated_completion_date: string | null
+          id: string
+          order_number: number
+          shop_id: string
+          status: string
+          technician_notes: string | null
+          total_amount: number | null
+          updated_at: string | null
+          vehicle_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          customer_id: string
+          description?: string | null
+          estimated_completion_date?: string | null
+          id?: string
+          order_number?: number
+          shop_id: string
+          status?: string
+          technician_notes?: string | null
+          total_amount?: number | null
+          updated_at?: string | null
+          vehicle_id: string
+        }
+        Update: {
+          created_at?: string | null
+          customer_id?: string
+          description?: string | null
+          estimated_completion_date?: string | null
+          id?: string
+          order_number?: number
+          shop_id?: string
+          status?: string
+          technician_notes?: string | null
+          total_amount?: number | null
+          updated_at?: string | null
+          vehicle_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_orders_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_orders_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_orders_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       shop_users: {
         Row: {
           joined_at: string | null
