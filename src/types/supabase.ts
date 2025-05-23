@@ -19,16 +19,26 @@ export interface ServiceOrderWithRelations {
   order_number: number;
   status: string;
   created_at: string;
+  updated_at?: string;
   total_amount: number;
+  description?: string;
+  technician_notes?: string;
+  estimated_completion_date?: string;
+  customer_id: string;
+  vehicle_id: string;
   customers: {
     id: string;
     name: string;
+    phone?: string;
+    email?: string;
   } | null;
   vehicles: {
     id: string;
     make: string;
     model: string;
+    year?: number;
     license_plate: string | null;
+    color?: string;
   } | null;
 }
 
@@ -40,4 +50,6 @@ export interface ServiceItem {
   quantity: number;
   unit_price: number;
   total_price: number;
+  service_order_id?: string;
+  created_at?: string;
 }
