@@ -11,19 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ArrowLeft, Save, Plus, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
-import { Tables } from "@/integrations/supabase/types";
-
-type Customer = Tables<"customers">;
-type Vehicle = Tables<"vehicles">;
-
-interface ServiceItem {
-  id?: string;
-  item_type: string;
-  description: string;
-  quantity: number;
-  unit_price: number;
-  total_price: number;
-}
+import { CustomerSelect, VehicleSelect, ServiceItem } from "@/types/supabase";
 
 const statusOptions = [
   { value: "pending", label: "Pendente" },
@@ -49,8 +37,8 @@ const ServiceOrderForm: React.FC = () => {
     status: "pending",
   });
   
-  const [customers, setCustomers] = useState<Customer[]>([]);
-  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+  const [customers, setCustomers] = useState<CustomerSelect[]>([]);
+  const [vehicles, setVehicles] = useState<VehicleSelect[]>([]);
   const [items, setItems] = useState<ServiceItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingData, setIsLoadingData] = useState(isEditing);
@@ -79,7 +67,7 @@ const ServiceOrderForm: React.FC = () => {
         .order("name");
         
       if (error) throw error;
-      setCustomers(data || []);
+      setCustomers((data || []) as CustomerSelect[]);
     } catch (error: any) {
       console.error("Error loading customers:", error);
       toast({
@@ -99,7 +87,7 @@ const ServiceOrderForm: React.FC = () => {
         .order("make");
         
       if (error) throw error;
-      setVehicles(data || []);
+      setVehicles((data || []) as VehicleSelect[]);
     } catch (error: any) {
       console.error("Error loading vehicles:", error);
       toast({
@@ -189,8 +177,82 @@ const ServiceOrderForm: React.FC = () => {
     return items.reduce((total, item) => total + item.total_price, 0);
   };
 
+  const validateForm = () => {
+    if (!formData.customer_id) {
+      toast({
+        title: "Cliente obrigatório",
+        description: "Selecione um cliente para continuar.",
+        variant: "destructive",
+      });
+      return false;
+    }
+    
+    if (!formData.vehicle_id) {
+      toast({
+        title: "Veículo obrigatório",
+        description: "Selecione um veículo para continuar.",
+        variant: "destructive",
+      });
+      return false;
+    }
+    
+    if (!formData.description) {
+      toast({
+        title: "Descrição obrigatória",
+        description: "Informe a descrição do problema para continuar.",
+        variant: "destructive",
+      });
+      return false;
+    }
+    
+    if (items.length === 0) {
+      toast({
+        title: "Itens obrigatórios",
+        description: "Adicione pelo menos um produto ou serviço.",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    // Validate each item
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      if (!item.description.trim()) {
+        toast({
+          title: "Descrição do item obrigatória",
+          description: `O item ${i + 1} precisa de uma descrição.`,
+          variant: "destructive",
+        });
+        return false;
+      }
+      if (item.quantity <= 0) {
+        toast({
+          title: "Quantidade inválida",
+          description: `O item ${i + 1} precisa de uma quantidade maior que zero.`,
+          variant: "destructive",
+        });
+        return false;
+      }
+      if (item.unit_price <= 0) {
+        toast({
+          title: "Preço inválido",
+          description: `O item ${i + 1} precisa de um preço maior que zero.`,
+          variant: "destructive",
+        });
+        return false;
+      }
+    }
+    
+    return true;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!validateForm()) {
+      return;
+    }
+    
     setIsLoading(true);
     
     try {

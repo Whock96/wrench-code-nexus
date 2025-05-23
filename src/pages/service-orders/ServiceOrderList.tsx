@@ -17,20 +17,7 @@ import {
 import { Plus, Search, ClipboardList, Eye, Edit } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
-import { Tables } from "@/integrations/supabase/types";
-
-type ServiceOrder = Tables<"service_orders"> & {
-  customers?: {
-    id: string;
-    name: string;
-  } | null;
-  vehicles?: {
-    id: string;
-    make: string;
-    model: string;
-    license_plate?: string;
-  } | null;
-};
+import { ServiceOrderWithRelations } from "@/types/supabase";
 
 const statusMap = {
   pending: { label: "Pendente", variant: "secondary" as const },
@@ -42,7 +29,7 @@ const statusMap = {
 };
 
 const ServiceOrderList: React.FC = () => {
-  const [serviceOrders, setServiceOrders] = useState<ServiceOrder[]>([]);
+  const [serviceOrders, setServiceOrders] = useState<ServiceOrderWithRelations[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(true);
 
@@ -70,7 +57,7 @@ const ServiceOrderList: React.FC = () => {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setServiceOrders(data || []);
+      setServiceOrders((data || []) as ServiceOrderWithRelations[]);
     } catch (error: any) {
       console.error("Error loading service orders:", error);
       toast({
