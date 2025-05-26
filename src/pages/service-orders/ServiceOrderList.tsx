@@ -45,13 +45,17 @@ const ServiceOrderList: React.FC = () => {
           *,
           customers (
             id,
-            name
+            name,
+            email,
+            phone
           ),
           vehicles (
             id,
             make,
             model,
-            license_plate
+            year,
+            license_plate,
+            color
           )
         `)
         .order("created_at", { ascending: false });
@@ -159,7 +163,12 @@ const ServiceOrderList: React.FC = () => {
                   {filteredServiceOrders.map((order) => (
                     <TableRow key={order.id}>
                       <TableCell className="font-medium">
-                        #{order.order_number}
+                        <Link
+                          to={`/service-orders/${order.id}`}
+                          className="text-primary hover:underline"
+                        >
+                          #{order.order_number}
+                        </Link>
                       </TableCell>
                       <TableCell>
                         {order.customers ? (
@@ -207,14 +216,24 @@ const ServiceOrderList: React.FC = () => {
                       </TableCell>
                       <TableCell>
                         <div className="flex space-x-2">
-                          <Button asChild variant="outline" size="sm">
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            asChild
+                          >
                             <Link to={`/service-orders/${order.id}`}>
-                              <Eye className="h-4 w-4" />
+                              <Eye className="h-4 w-4 mr-1" />
+                              Ver Detalhes
                             </Link>
                           </Button>
-                          <Button asChild size="sm">
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            asChild
+                          >
                             <Link to={`/service-orders/${order.id}/edit`}>
-                              <Edit className="h-4 w-4" />
+                              <Edit className="h-4 w-4 mr-1" />
+                              Editar
                             </Link>
                           </Button>
                         </div>
