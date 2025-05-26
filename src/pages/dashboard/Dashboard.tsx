@@ -1,199 +1,371 @@
 
-import React from "react";
+import React, { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import AppLayout from "@/components/layout/AppLayout";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Users, Car, FileText, DollarSign, Clock, CheckCircle, AlertTriangle } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/components/ui/use-toast";
+
+// Status mapping for colors and labels
+const statusMap = {
+  pending: { label: "Pendente", color: "bg-yellow-500", icon: Clock },
+  approved: { label: "Aprovado", color: "bg-blue-500", icon: Clock },
+  in_progress: { label: "Em Andamento", color: "bg-indigo-500", icon: Clock },
+  waiting_parts: { label: "Aguardando Peças", color: "bg-purple-500", icon: Clock },
+  completed: { label: "Concluído", color: "bg-green-500", icon: CheckCircle },
+  canceled: { label: "Cancelado", color: "bg-red-500", icon: AlertTriangle },
+};
 
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
+  const [stats, setStats] = useState({
+    clients: 0,
+    vehicles: 0,
+    serviceOrders: 0,
+    revenue: 0,
+  });
+  const [statusCounts, setStatusCounts] = useState<Record<string, number>>({});
+  const [recentOrders, setRecentOrders] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Mock data for dashboard
-  const shopData = {
-    servicesCompleted: 12,
-    activeOrders: 5,
-    pendingApprovals: 2,
-    vehiclesInShop: 8,
-    revenueToday: "R$ 3.250,00",
-    revenueMonth: "R$ 42.800,00",
-    popularServices: [
-      { name: "Oil Change", count: 8 },
-      { name: "Brake Inspection", count: 5 },
-      { name: "Wheel Alignment", count: 4 },
-    ],
-    recentOrders: [
-      { id: "OS-2023-001", customer: "Carlos Silva", vehicle: "Honda Civic 2020", status: "in_progress" },
-      { id: "OS-2023-002", customer: "Maria Santos", vehicle: "Toyota Corolla 2019", status: "pending_approval" },
-      { id: "OS-2023-003", customer: "João Oliveira", vehicle: "Fiat Argo 2021", status: "completed" },
-    ],
-  };
+  useEffect(() => {
+    loadDashboardData();
+  }, []);
 
-  // Get status badge variant - fixed to use only valid variants
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "in_progress":
-        return { variant: "secondary" as const, label: "Em Progresso" };
-      case "pending_approval":
-        return { variant: "outline" as const, label: "Pendente Aprovação" };
-      case "completed":
-        return { variant: "default" as const, label: "Concluído" };
-      default:
-        return { variant: "secondary" as const, label: status };
+  const loadDashboardData = async () => {
+    setIsLoading(true);
+    try {
+      // Load client count
+      const { count: clientCount, error: clientError } = await supabase
+        .from("customers")
+        .select("*", { count: "exact", head: true });
+      
+      if (clientError) throw clientError;
+      
+      // Load vehicle count
+      const { count: vehicleCount, error: vehicleError } = await supabase
+        .from("vehicles")
+        .select("*", { count: "exact", head: true });
+      
+      if (vehicleError) throw vehicleError;
+      
+      // Load service order count
+      const { count: serviceOrderCount, error: serviceOrderError } = await supabase
+        .from("service_orders")
+        .select("*", { count: "exact", head: true });
+      
+      if (serviceOrderError) throw serviceOrderError;
+      
+      // Load total revenue (sum of total_amount from completed orders)
+      const { data: revenueData, error: revenueError } = await supabase
+        .from("service_orders")
+        .select("total_amount")
+        .eq("status", "completed");
+      
+      if (revenueError) throw revenueError;
+      
+      const totalRevenue = revenueData?.reduce((sum, order) => sum + (order.total_amount || 0), 0) || 0;
+      
+      // Load status counts
+      const { data: statusData, error: statusError } = await supabase
+        .from("service_orders")
+        .select("status");
+      
+      if (statusError) throw statusError;
+      
+      const counts: Record<string, number> = {};
+      statusData?.forEach(order => {
+        counts[order.status] = (counts[order.status] || 0) + 1;
+      });
+      
+      // Load recent orders
+      const { data: recentOrdersData, error: recentOrdersError } = await supabase
+        .from("service_orders")
+        .select(`
+          *,
+          customers:customer_id(name),
+          vehicles:vehicle_id(make, model, license_plate)
+        `)
+        .order("created_at", { ascending: false })
+        .limit(5);
+      
+      if (recentOrdersError) throw recentOrdersError;
+      
+      setStats({
+        clients: clientCount || 0,
+        vehicles: vehicleCount || 0,
+        serviceOrders: serviceOrderCount || 0,
+        revenue: totalRevenue,
+      });
+      
+      setStatusCounts(counts);
+      setRecentOrders(recentOrdersData || []);
+    } catch (error: any) {
+      console.error("Error loading dashboard data:", error);
+      toast({
+        title: "Erro ao carregar dados",
+        description: "Não foi possível carregar os dados do dashboard.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
     <AppLayout>
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold">Dashboard</h1>
-          <p className="text-muted-foreground">
-            Bem-vindo de volta, {user?.firstName || user?.full_name || 'Usuário'}! Aqui está o que está acontecendo hoje.
-          </p>
+      <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
+            <p className="text-muted-foreground">
+              Bem-vindo de volta, {user?.firstName || user?.full_name || 'Usuário'}! Aqui está o que está acontecendo hoje.
+            </p>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Button onClick={() => loadDashboardData()}>Atualizar</Button>
+          </div>
         </div>
-
-        {/* Overview Stats */}
+        
+        {/* Stats Cards */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Serviços Concluídos
-              </CardTitle>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total de Clientes</CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{shopData.servicesCompleted}</div>
-              <p className="text-xs text-muted-foreground">Hoje</p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Ordens Ativas
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{shopData.activeOrders}</div>
-              <p className="text-xs text-muted-foreground">Em progresso</p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Veículos na Oficina
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{shopData.vehiclesInShop}</div>
-              <p className="text-xs text-muted-foreground">Atualmente</p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Receita Hoje
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{shopData.revenueToday}</div>
+              <div className="text-2xl font-bold">{isLoading ? "..." : stats.clients}</div>
               <p className="text-xs text-muted-foreground">
-                {shopData.revenueMonth} este mês
+                Clientes cadastrados
+              </p>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total de Veículos</CardTitle>
+              <Car className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{isLoading ? "..." : stats.vehicles}</div>
+              <p className="text-xs text-muted-foreground">
+                Veículos cadastrados
+              </p>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Ordens de Serviço</CardTitle>
+              <FileText className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{isLoading ? "..." : stats.serviceOrders}</div>
+              <p className="text-xs text-muted-foreground">
+                Ordens de serviço totais
+              </p>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Receita Total</CardTitle>
+              <DollarSign className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {isLoading
+                  ? "..."
+                  : new Intl.NumberFormat("pt-BR", {
+                      style: "currency",
+                      currency: "BRL",
+                    }).format(stats.revenue)}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                De ordens concluídas
               </p>
             </CardContent>
           </Card>
         </div>
-
-        {/* Recent Activity */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-          <Card className="lg:col-span-5">
-            <CardHeader>
-              <CardTitle>Ordens Recentes</CardTitle>
-              <CardDescription>
-                Ordens de serviço criadas ou atualizadas hoje
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {shopData.recentOrders.map((order) => {
-                  const badge = getStatusBadge(order.status);
-                  
-                  return (
-                    <div key={order.id} className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0">
-                      <div className="space-y-1">
-                        <div className="font-medium">{order.id}</div>
-                        <div className="text-sm text-muted-foreground">
-                          {order.customer} - {order.vehicle}
+        
+        <Tabs defaultValue="overview" className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="overview">Visão Geral</TabsTrigger>
+            <TabsTrigger value="orders">Ordens de Serviço</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="overview" className="space-y-4">
+            {/* Status Cards */}
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {Object.entries(statusMap).map(([status, { label, color, icon: Icon }]) => (
+                <Card key={status}>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">{label}</CardTitle>
+                    <div className={`${color} p-1 rounded-full`}>
+                      <Icon className="h-4 w-4 text-white" />
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">
+                      {isLoading ? "..." : statusCounts[status] || 0}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Ordens de serviço
+                    </p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+            
+            {/* Recent Orders */}
+            <Card className="col-span-3">
+              <CardHeader>
+                <CardTitle>Ordens de Serviço Recentes</CardTitle>
+                <CardDescription>
+                  As 5 ordens de serviço mais recentes
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {isLoading ? (
+                  <div className="flex items-center justify-center h-40">
+                    <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+                  </div>
+                ) : recentOrders.length === 0 ? (
+                  <div className="text-center py-6">
+                    <p className="text-muted-foreground">
+                      Nenhuma ordem de serviço encontrada
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {recentOrders.map((order) => {
+                      const statusInfo = statusMap[order.status as keyof typeof statusMap];
+                      const Icon = statusInfo?.icon || Clock;
+                      
+                      return (
+                        <div key={order.id} className="flex items-center justify-between border-b pb-4 last:border-0">
+                          <div className="flex items-center space-x-4">
+                            <div className={`${statusInfo?.color} p-2 rounded-full`}>
+                              <Icon className="h-4 w-4 text-white" />
+                            </div>
+                            <div>
+                              <Link 
+                                to={`/service-orders/${order.id}`}
+                                className="font-medium hover:underline"
+                              >
+                                OS #{order.order_number}
+                              </Link>
+                              <div className="text-sm text-muted-foreground">
+                                {order.customers?.name} - {order.vehicles?.make} {order.vehicles?.model}
+                                {order.vehicles?.license_plate && ` (${order.vehicles.license_plate})`}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <div className="font-medium">
+                              {new Intl.NumberFormat("pt-BR", {
+                                style: "currency",
+                                currency: "BRL",
+                              }).format(order.total_amount || 0)}
+                            </div>
+                            <div className="text-sm text-muted-foreground">
+                              {new Date(order.created_at).toLocaleDateString()}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                    
+                    <div className="text-center pt-4">
+                      <Button asChild variant="outline">
+                        <Link to="/service-orders">Ver Todas as Ordens</Link>
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="orders" className="space-y-4">
+            {/* Status Distribution */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Distribuição de Status</CardTitle>
+                <CardDescription>
+                  Visão geral do status das ordens de serviço
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {Object.entries(statusMap).map(([status, { label, color }]) => {
+                    const count = statusCounts[status] || 0;
+                    const percentage = stats.serviceOrders > 0 
+                      ? Math.round((count / stats.serviceOrders) * 100) 
+                      : 0;
+                    
+                    return (
+                      <div key={status} className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium">{label}</span>
+                          <span className="text-sm text-muted-foreground">
+                            {count} ({percentage}%)
+                          </span>
+                        </div>
+                        <div className="h-2 w-full rounded-full bg-secondary">
+                          <div 
+                            className={`h-2 rounded-full ${color}`}
+                            style={{ width: `${percentage}%` }}
+                          />
                         </div>
                       </div>
-                      <Badge variant={badge.variant}>{badge.label}</Badge>
-                    </div>
-                  );
-                })}
-              </div>
-            </CardContent>
-            <CardFooter>
-              <div className="text-sm text-muted-foreground">
-                Mostrando 3 de {shopData.activeOrders + shopData.pendingApprovals} ordens ativas
-              </div>
-            </CardFooter>
-          </Card>
-          
-          <Card className="lg:col-span-2">
-            <CardHeader>
-              <CardTitle>Serviços Populares</CardTitle>
-              <CardDescription>
-                Serviços mais solicitados este mês
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {shopData.popularServices.map((service, index) => (
-                  <div key={index} className="flex items-center justify-between">
-                    <div className="text-sm font-medium">{service.name}</div>
-                    <div className="text-sm text-muted-foreground">{service.count}</div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Quick Actions */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Ações Rápidas</CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-wrap gap-4">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 w-full">
-              <div className="flex flex-col items-center justify-center p-4 border rounded-lg hover:bg-accent hover:border-primary cursor-pointer transition-all hover-scale">
-                <div className="rounded-full bg-primary/10 p-3 mb-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                    );
+                  })}
                 </div>
-                <span className="text-sm font-medium">Novo Cliente</span>
-              </div>
-              <div className="flex flex-col items-center justify-center p-4 border rounded-lg hover:bg-accent hover:border-primary cursor-pointer transition-all hover-scale">
-                <div className="rounded-full bg-primary/10 p-3 mb-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+              </CardContent>
+            </Card>
+            
+            {/* Quick Actions */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Ações Rápidas</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <Button asChild className="w-full">
+                    <Link to="/service-orders/new">
+                      <FileText className="h-4 w-4 mr-2" />
+                      Nova Ordem de Serviço
+                    </Link>
+                  </Button>
+                  <Button asChild variant="outline" className="w-full">
+                    <Link to="/service-orders">
+                      <FileText className="h-4 w-4 mr-2" />
+                      Listar Ordens
+                    </Link>
+                  </Button>
+                  <Button asChild variant="outline" className="w-full">
+                    <Link to="/clients/new">
+                      <Users className="h-4 w-4 mr-2" />
+                      Novo Cliente
+                    </Link>
+                  </Button>
+                  <Button asChild variant="outline" className="w-full">
+                    <Link to="/vehicles/new">
+                      <Car className="h-4 w-4 mr-2" />
+                      Novo Veículo
+                    </Link>
+                  </Button>
                 </div>
-                <span className="text-sm font-medium">Novo Veículo</span>
-              </div>
-              <div className="flex flex-col items-center justify-center p-4 border rounded-lg hover:bg-accent hover:border-primary cursor-pointer transition-all hover-scale">
-                <div className="rounded-full bg-primary/10 p-3 mb-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><path d="M14 2v6h6"></path><path d="M16 13H8"></path><path d="M16 17H8"></path><path d="M10 9H8"></path></svg>
-                </div>
-                <span className="text-sm font-medium">Nova Ordem de Serviço</span>
-              </div>
-              <div className="flex flex-col items-center justify-center p-4 border rounded-lg hover:bg-accent hover:border-primary cursor-pointer transition-all hover-scale">
-                <div className="rounded-full bg-primary/10 p-3 mb-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary"><rect width="18" height="10" x="3" y="10" rx="2"></rect><circle cx="7" cy="15" r="2"></circle><path d="M15.3 15.5a2 2 0 0 0 0-1"></path><path d="M17.3 15.5a2 2 0 0 0 0-1"></path><path d="m6 10-1.5-4.5a1 1 0 0 1 0-.78"></path><path d="m18 10 1.5-4.5a1 1 0 0 0 0-.78"></path><path d="M17.8 18.2c.2.4.2.8 0 1.2-.2.2-.5.6-1 .6H7.2c-.5 0-.8-.4-1-.6-.2-.4-.2-.8 0-1.2l1-1c.2-.2.5-.4.8-.4h8c.3 0 .6.2.8.4l1 1Z"></path></svg>
-                </div>
-                <span className="text-sm font-medium">Gerar QR Code</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </AppLayout>
   );
