@@ -8,7 +8,8 @@ import {
   Car, 
   ClipboardList, 
   Settings,
-  Building2
+  Building2,
+  BarChart
 } from "lucide-react";
 
 const menuItems = [
@@ -31,6 +32,11 @@ const menuItems = [
     title: "Ordens de Serviço",
     href: "/service-orders",
     icon: ClipboardList,
+  },
+  {
+    title: "Relatórios",
+    href: "/reports",
+    icon: BarChart,
   },
   {
     title: "Configurações",

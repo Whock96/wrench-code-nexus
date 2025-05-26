@@ -33,6 +33,9 @@ import ServiceOrderList from "./pages/service-orders/ServiceOrderList";
 import ServiceOrderForm from "./pages/service-orders/ServiceOrderForm";
 import ServiceOrderDetail from "./pages/service-orders/ServiceOrderDetail";
 
+// Reports Pages
+import ReportsDashboard from "./pages/reports/ReportsDashboard";
+
 // Shared Pages
 import NotFound from "./pages/NotFound";
 
@@ -75,6 +78,9 @@ const App = () => (
             <Route path="/service-orders/new" element={<ServiceOrderForm />} />
             <Route path="/service-orders/:id" element={<ServiceOrderDetail />} />
             <Route path="/service-orders/:id/edit" element={<ServiceOrderForm />} />
+            
+            {/* Reports Routes */}
+            <Route path="/reports" element={<ReportsDashboard />} />
             
             {/* Catch-all Route */}
             <Route path="*" element={<NotFound />} />
