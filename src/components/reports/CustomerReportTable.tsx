@@ -1,30 +1,28 @@
 
 import React from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { FileText } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { CustomerReportData } from "@/hooks/useReportData";
 import { ReportExporter } from "@/services/report-exporter";
 import { DateRange } from "react-day-picker";
 
-interface RevenueChartProps {
-  data: {
-    period: string;
-    revenue: number;
-  }[];
+interface CustomerReportTableProps {
+  data: CustomerReportData[];
   isLoading: boolean;
   dateRange: DateRange | undefined;
   title?: string;
   description?: string;
 }
 
-const RevenueChart: React.FC<RevenueChartProps> = ({
+const CustomerReportTable: React.FC<CustomerReportTableProps> = ({
   data,
   isLoading,
   dateRange,
-  title = "Faturamento por Período",
-  description = "Análise de faturamento baseada em ordens de serviço concluídas"
+  title = "Relatório de Clientes",
+  description = "Análise de clientes por faturamento e número de ordens de serviço"
 }) => {
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("pt-BR", {
@@ -35,7 +33,7 @@ const RevenueChart: React.FC<RevenueChartProps> = ({
 
   const handleExportPDF = () => {
     if (data.length > 0 && dateRange?.from) {
-      ReportExporter.exportRevenueToPDF(
+      ReportExporter.exportCustomerReportToPDF(
         data,
         { from: dateRange.from, to: dateRange.to || new Date() }
       );
@@ -46,14 +44,14 @@ const RevenueChart: React.FC<RevenueChartProps> = ({
     if (data.length > 0) {
       ReportExporter.exportToExcel(
         data,
-        "Faturamento",
-        "relatorio-faturamento"
+        "Clientes",
+        "relatorio-clientes"
       );
     }
   };
 
   return (
-    <Card className="col-span-4">
+    <Card className="col-span-6">
       <CardHeader className="flex flex-row items-center justify-between">
         <div>
           <CardTitle>{title}</CardTitle>
@@ -80,29 +78,46 @@ const RevenueChart: React.FC<RevenueChartProps> = ({
           </Button>
         </div>
       </CardHeader>
-      <CardContent className="pl-2">
+      <CardContent>
         {isLoading ? (
-          <div className="w-full h-[300px] flex items-center justify-center">
-            <Skeleton className="w-full h-[250px]" />
+          <div className="w-full space-y-3">
+            <Skeleton className="h-8 w-full" />
+            <Skeleton className="h-8 w-full" />
+            <Skeleton className="h-8 w-full" />
+            <Skeleton className="h-8 w-full" />
+            <Skeleton className="h-8 w-full" />
           </div>
         ) : data.length === 0 ? (
-          <div className="w-full h-[300px] flex items-center justify-center text-muted-foreground">
+          <div className="w-full py-8 text-center text-muted-foreground">
             Nenhum dado disponível para o período selecionado
           </div>
         ) : (
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={data} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="period" />
-              <YAxis tickFormatter={(value) => `R$ ${value}`} />
-              <Tooltip formatter={(value) => [formatCurrency(value as number), "Faturamento"]} />
-              <Bar dataKey="revenue" fill="#8884d8" name="Faturamento" />
-            </BarChart>
-          </ResponsiveContainer>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Cliente</TableHead>
+                  <TableHead className="text-right">Total de OS</TableHead>
+                  <TableHead className="text-right">Faturamento</TableHead>
+                  <TableHead>Último Serviço</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {data.map((item) => (
+                  <TableRow key={item.id}>
+                    <TableCell className="font-medium">{item.name}</TableCell>
+                    <TableCell className="text-right">{item.totalOrders}</TableCell>
+                    <TableCell className="text-right">{formatCurrency(item.totalRevenue)}</TableCell>
+                    <TableCell>{item.lastServiceDate}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         )}
       </CardContent>
     </Card>
   );
 };
 
-export default RevenueChart;
+export default CustomerReportTable;

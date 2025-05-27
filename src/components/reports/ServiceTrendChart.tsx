@@ -11,6 +11,7 @@ interface ServiceTrendChartProps {
     completed: number;
   }[];
   isLoading: boolean;
+  dateRange?: any;
   title?: string;
   description?: string;
 }

@@ -2,7 +2,11 @@
 import React from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
+import { Button } from "@/components/ui/button";
+import { FileText } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ReportExporter } from "@/services/report-exporter";
+import { DateRange } from "react-day-picker";
 
 interface StatusDistributionChartProps {
   data: {
@@ -11,6 +15,7 @@ interface StatusDistributionChartProps {
     color: string;
   }[];
   isLoading: boolean;
+  dateRange: DateRange | undefined;
   title?: string;
   description?: string;
 }
@@ -18,6 +23,7 @@ interface StatusDistributionChartProps {
 const StatusDistributionChart: React.FC<StatusDistributionChartProps> = ({
   data,
   isLoading,
+  dateRange,
   title = "Distribuição de Status",
   description = "Distribuição atual das ordens de serviço por status"
 }) => {
@@ -34,11 +40,52 @@ const StatusDistributionChart: React.FC<StatusDistributionChartProps> = ({
     return translations[status] || status;
   };
 
+  const handleExportPDF = () => {
+    if (data.length > 0 && dateRange?.from) {
+      ReportExporter.exportStatusDistributionToPDF(
+        data,
+        { from: dateRange.from, to: dateRange.to || new Date() }
+      );
+    }
+  };
+
+  const handleExportExcel = () => {
+    if (data.length > 0) {
+      ReportExporter.exportToExcel(
+        data,
+        "Status",
+        "relatorio-status"
+      );
+    }
+  };
+
   return (
     <Card className="col-span-2">
-      <CardHeader>
-        <CardTitle>{title}</CardTitle>
-        <CardDescription>{description}</CardDescription>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <div>
+          <CardTitle>{title}</CardTitle>
+          <CardDescription>{description}</CardDescription>
+        </div>
+        <div className="flex space-x-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleExportPDF}
+            disabled={isLoading || data.length === 0}
+          >
+            <FileText className="mr-2 h-4 w-4" />
+            PDF
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleExportExcel}
+            disabled={isLoading || data.length === 0}
+          >
+            <FileText className="mr-2 h-4 w-4" />
+            Excel
+          </Button>
+        </div>
       </CardHeader>
       <CardContent>
         {isLoading ? (

@@ -30,12 +30,36 @@ interface ServiceTrend {
   completed: number;
 }
 
+export interface CustomerReportData {
+  id: string;
+  name: string;
+  totalOrders: number;
+  totalRevenue: number;
+  lastServiceDate: string;
+}
+
+export interface VehicleReportData {
+  id: string;
+  licensePlate: string;
+  make: string;
+  model: string;
+  year: number;
+  customerName: string;
+  totalOrders: number;
+  totalRevenue: number;
+  lastServiceDate: string;
+}
+
 export const useReportData = (dateRange: DateRange | undefined) => {
   const [isLoading, setIsLoading] = useState(true);
   const [stats, setStats] = useState<ReportStats | null>(null);
   const [revenueByPeriod, setRevenueByPeriod] = useState<RevenueByPeriod[]>([]);
   const [statusDistribution, setStatusDistribution] = useState<StatusDistribution[]>([]);
   const [serviceTrend, setServiceTrend] = useState<ServiceTrend[]>([]);
+  const [customerReport, setCustomerReport] = useState<CustomerReportData[]>([]);
+  const [vehicleReport, setVehicleReport] = useState<VehicleReportData[]>([]);
+  const [isLoadingCustomerReport, setIsLoadingCustomerReport] = useState(false);
+  const [isLoadingVehicleReport, setIsLoadingVehicleReport] = useState(false);
 
   // Status colors for consistent visualization
   const statusColors: Record<string, string> = {
@@ -46,37 +70,6 @@ export const useReportData = (dateRange: DateRange | undefined) => {
     completed: "#2ecc71",   // Green
     canceled: "#e74c3c"     // Red
   };
-
-  useEffect(() => {
-    if (!dateRange?.from || !dateRange?.to) return;
-    
-    const loadReportData = async () => {
-      setIsLoading(true);
-      try {
-        const fromDate = dateRange.from.toISOString();
-        const toDate = dateRange.to ? dateRange.to.toISOString() : new Date().toISOString();
-
-        // 1. Load basic stats
-        await loadBasicStats(fromDate, toDate);
-        
-        // 2. Load revenue by period (monthly)
-        await loadRevenueByPeriod(dateRange.from, dateRange.to || new Date());
-        
-        // 3. Load status distribution
-        await loadStatusDistribution(fromDate, toDate);
-        
-        // 4. Load service trends
-        await loadServiceTrend(dateRange.from, dateRange.to || new Date());
-        
-      } catch (error) {
-        console.error("Error loading report data:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadReportData();
-  }, [dateRange]);
 
   const loadBasicStats = async (fromDate: string, toDate: string) => {
     try {
@@ -202,7 +195,7 @@ export const useReportData = (dateRange: DateRange | undefined) => {
 
   const loadServiceTrend = async (fromDate: Date, toDate: Date) => {
     try {
-      // Determinar o intervalo apropriado (diário, semanal ou mensal) com base na duração
+      // Gerar array de meses no intervalo
       const months = eachMonthOfInterval({ start: fromDate, end: toDate });
       
       const trendData: ServiceTrend[] = [];
@@ -244,11 +237,242 @@ export const useReportData = (dateRange: DateRange | undefined) => {
     }
   };
 
+  const loadCustomerReport = async (fromDate: string, toDate: string) => {
+    setIsLoadingCustomerReport(true);
+    try {
+      // Buscar dados de clientes com ordens de serviço no período
+      const { data: serviceOrders, error: serviceOrdersError } = await supabase
+        .from("service_orders")
+        .select(`
+          id,
+          total_amount,
+          status,
+          created_at,
+          updated_at,
+          customers (
+            id,
+            name
+          )
+        `)
+        .gte("created_at", fromDate)
+        .lte("created_at", toDate);
+        
+      if (serviceOrdersError) throw serviceOrdersError;
+      
+      // Processar os dados para o formato do relatório
+      const customerReportData: CustomerReportData[] = [];
+      
+      // Agrupar por cliente
+      const customerMap = new Map<string, {
+        id: string;
+        name: string;
+        orders: any[];
+        revenue: number;
+        lastServiceDate: string;
+      }>();
+      
+      serviceOrders?.forEach(order => {
+        if (!order.customers) return;
+        
+        const customerId = order.customers.id;
+        const customerName = order.customers.name;
+        
+        if (!customerMap.has(customerId)) {
+          customerMap.set(customerId, {
+            id: customerId,
+            name: customerName,
+            orders: [],
+            revenue: 0,
+            lastServiceDate: ''
+          });
+        }
+        
+        const customerData = customerMap.get(customerId)!;
+        customerData.orders.push(order);
+        
+        if (order.status === 'completed') {
+          customerData.revenue += (order.total_amount || 0);
+        }
+        
+        // Atualizar data do último serviço
+        const orderDate = new Date(order.updated_at || order.created_at);
+        const currentLastDate = customerData.lastServiceDate ? new Date(customerData.lastServiceDate) : new Date(0);
+        if (orderDate > currentLastDate) {
+          customerData.lastServiceDate = format(orderDate, 'dd/MM/yyyy', { locale: ptBR });
+        }
+      });
+      
+      // Converter o Map para array e ordenar por receita (decrescente)
+      Array.from(customerMap.values())
+        .sort((a, b) => b.revenue - a.revenue)
+        .forEach(item => {
+          customerReportData.push({
+            id: item.id,
+            name: item.name,
+            totalOrders: item.orders.length,
+            totalRevenue: item.revenue,
+            lastServiceDate: item.lastServiceDate
+          });
+        });
+      
+      setCustomerReport(customerReportData);
+    } catch (error) {
+      console.error("Error loading customer report:", error);
+      setCustomerReport([]);
+    } finally {
+      setIsLoadingCustomerReport(false);
+    }
+  };
+
+  const loadVehicleReport = async (fromDate: string, toDate: string) => {
+    setIsLoadingVehicleReport(true);
+    try {
+      // Buscar dados de veículos com ordens de serviço no período
+      const { data: serviceOrders, error: serviceOrdersError } = await supabase
+        .from("service_orders")
+        .select(`
+          id,
+          total_amount,
+          status,
+          created_at,
+          updated_at,
+          vehicles (
+            id,
+            license_plate,
+            make,
+            model,
+            year
+          ),
+          customers (
+            id,
+            name
+          )
+        `)
+        .gte("created_at", fromDate)
+        .lte("created_at", toDate);
+        
+      if (serviceOrdersError) throw serviceOrdersError;
+      
+      // Processar os dados para o formato do relatório
+      const vehicleReportData: VehicleReportData[] = [];
+      
+      // Agrupar por veículo
+      const vehicleMap = new Map<string, {
+        id: string;
+        licensePlate: string;
+        make: string;
+        model: string;
+        year: number;
+        customerName: string;
+        orders: any[];
+        revenue: number;
+        lastServiceDate: string;
+      }>();
+      
+      serviceOrders?.forEach(order => {
+        if (!order.vehicles || !order.customers) return;
+        
+        const vehicleId = order.vehicles.id;
+        
+        if (!vehicleMap.has(vehicleId)) {
+          vehicleMap.set(vehicleId, {
+            id: vehicleId,
+            licensePlate: order.vehicles.license_plate || 'N/A',
+            make: order.vehicles.make,
+            model: order.vehicles.model,
+            year: order.vehicles.year || 0,
+            customerName: order.customers.name,
+            orders: [],
+            revenue: 0,
+            lastServiceDate: ''
+          });
+        }
+        
+        const vehicleData = vehicleMap.get(vehicleId)!;
+        vehicleData.orders.push(order);
+        
+        if (order.status === 'completed') {
+          vehicleData.revenue += (order.total_amount || 0);
+        }
+        
+        // Atualizar data do último serviço
+        const orderDate = new Date(order.updated_at || order.created_at);
+        const currentLastDate = vehicleData.lastServiceDate ? new Date(vehicleData.lastServiceDate) : new Date(0);
+        if (orderDate > currentLastDate) {
+          vehicleData.lastServiceDate = format(orderDate, 'dd/MM/yyyy', { locale: ptBR });
+        }
+      });
+      
+      // Converter o Map para array e ordenar por receita (decrescente)
+      Array.from(vehicleMap.values())
+        .sort((a, b) => b.revenue - a.revenue)
+        .forEach(item => {
+          vehicleReportData.push({
+            id: item.id,
+            licensePlate: item.licensePlate,
+            make: item.make,
+            model: item.model,
+            year: item.year,
+            customerName: item.customerName,
+            totalOrders: item.orders.length,
+            totalRevenue: item.revenue,
+            lastServiceDate: item.lastServiceDate
+          });
+        });
+      
+      setVehicleReport(vehicleReportData);
+    } catch (error) {
+      console.error("Error loading vehicle report:", error);
+      setVehicleReport([]);
+    } finally {
+      setIsLoadingVehicleReport(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!dateRange?.from || !dateRange?.to) return;
+    
+    const loadReportData = async () => {
+      setIsLoading(true);
+      try {
+        const fromDate = dateRange.from.toISOString();
+        const toDate = dateRange.to ? dateRange.to.toISOString() : new Date().toISOString();
+
+        // 1. Load basic stats
+        await loadBasicStats(fromDate, toDate);
+        
+        // 2. Load revenue by period (monthly)
+        await loadRevenueByPeriod(dateRange.from, dateRange.to || new Date());
+        
+        // 3. Load status distribution
+        await loadStatusDistribution(fromDate, toDate);
+        
+        // 4. Load service trends
+        await loadServiceTrend(dateRange.from, dateRange.to || new Date());
+        
+        // 5. Load custom reports
+        await loadCustomerReport(fromDate, toDate);
+        await loadVehicleReport(fromDate, toDate);
+        
+      } catch (error) {
+        console.error("Error loading report data:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadReportData();
+  }, [dateRange]);
+
   return {
     isLoading,
     stats,
     revenueByPeriod,
     statusDistribution,
-    serviceTrend
+    serviceTrend,
+    customerReport,
+    vehicleReport,
+    isLoadingCustomerReport,
+    isLoadingVehicleReport
   };
 };
