@@ -388,21 +388,25 @@ export function useCachedReportData(
       .sort((a, b) => b.totalOrders - a.totalOrders);
   };
   
-  // Usar React Query para cache inteligente
+  // Usar React Query para cache inteligente com API v5
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: cacheKey,
     queryFn: fetchReportData,
     staleTime: 5 * 60 * 1000, // 5 minutos
-    gcTime: 30 * 60 * 1000, // 30 minutos (substituído cacheTime)
-    retry: 1,
-    onError: (err: any) => {
+    gcTime: 30 * 60 * 1000, // 30 minutos (substituiu cacheTime)
+    retry: 1
+  });
+  
+  // Tratamento de erro via useEffect (compatível com TanStack Query v5)
+  useEffect(() => {
+    if (isError && error) {
       toast({
         title: "Erro ao carregar relatório",
-        description: err.message || "Não foi possível carregar os dados do relatório",
+        description: error instanceof Error ? error.message : "Não foi possível carregar os dados do relatório",
         variant: "destructive"
       });
     }
-  });
+  }, [isError, error]);
   
   // Função para forçar atualização dos dados
   const refreshData = () => {
