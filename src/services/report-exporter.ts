@@ -1,9 +1,16 @@
-
 import { jsPDF } from "jspdf";
-import autoTable from "jspdf-autotable";
+import "jspdf-autotable";
 import * as XLSX from "xlsx";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+
+// Declaração para TypeScript reconhecer o método autoTable
+declare module "jspdf" {
+  interface jsPDF {
+    autoTable: (options: any) => jsPDF;
+    previousAutoTable: { finalY: number };
+  }
+}
 
 // Tipos para os diferentes relatórios
 export interface RevenueReportData {
@@ -95,7 +102,7 @@ export class ReportExporter {
       this.formatCurrency(item.revenue)
     ]);
     
-    autoTable(doc, {
+    doc.autoTable({
       head: [["Período", "Faturamento"]],
       body: tableData,
       startY: 40,
@@ -110,7 +117,7 @@ export class ReportExporter {
     doc.text(
       `Faturamento Total: ${this.formatCurrency(totalRevenue)}`,
       14,
-      (doc as any).lastAutoTable.finalY + 10
+      (doc as any).previousAutoTable.finalY + 10
     );
     
     // Rodapé
@@ -155,7 +162,7 @@ export class ReportExporter {
       `${((item.count / data.reduce((sum, i) => sum + i.count, 0)) * 100).toFixed(2)}%`
     ]);
     
-    autoTable(doc, {
+    doc.autoTable({
       head: [["Status", "Quantidade", "Porcentagem"]],
       body: tableData,
       startY: 40,
@@ -170,7 +177,7 @@ export class ReportExporter {
     doc.text(
       `Total de Ordens: ${totalOrders}`,
       14,
-      (doc as any).lastAutoTable.finalY + 10
+      (doc as any).previousAutoTable.finalY + 10
     );
     
     // Rodapé
@@ -216,7 +223,7 @@ export class ReportExporter {
       item.lastServiceDate
     ]);
     
-    autoTable(doc, {
+    doc.autoTable({
       head: [["Cliente", "Total de OS", "Faturamento", "Último Serviço"]],
       body: tableData,
       startY: 40,
@@ -233,12 +240,12 @@ export class ReportExporter {
     doc.text(
       `Total de Ordens: ${totalOrders}`,
       14,
-      (doc as any).lastAutoTable.finalY + 10
+      (doc as any).previousAutoTable.finalY + 10
     );
     doc.text(
       `Faturamento Total: ${this.formatCurrency(totalRevenue)}`,
       14,
-      (doc as any).lastAutoTable.finalY + 20
+      (doc as any).previousAutoTable.finalY + 20
     );
     
     // Rodapé
@@ -286,7 +293,7 @@ export class ReportExporter {
       item.lastServiceDate
     ]);
     
-    autoTable(doc, {
+    doc.autoTable({
       head: [["Placa", "Veículo", "Cliente", "Total de OS", "Faturamento", "Último Serviço"]],
       body: tableData,
       startY: 40,
@@ -303,12 +310,12 @@ export class ReportExporter {
     doc.text(
       `Total de Ordens: ${totalOrders}`,
       14,
-      (doc as any).lastAutoTable.finalY + 10
+      (doc as any).previousAutoTable.finalY + 10
     );
     doc.text(
       `Faturamento Total: ${this.formatCurrency(totalRevenue)}`,
       14,
-      (doc as any).lastAutoTable.finalY + 20
+      (doc as any).previousAutoTable.finalY + 20
     );
     
     // Rodapé
