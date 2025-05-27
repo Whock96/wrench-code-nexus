@@ -1,4 +1,6 @@
 
+import { DateRange } from "react-day-picker";
+
 export type ReportType = 
   | "overview" 
   | "customer" 
@@ -8,7 +10,7 @@ export type ReportType =
 
 // Interface para filtros avançados
 export interface ReportFilters {
-  dateRange: { from: Date; to?: Date } | undefined;
+  dateRange: DateRange | undefined;
   customerId?: string;
   vehicleId?: string;
   technicianId?: string;
@@ -36,9 +38,12 @@ export interface CustomerData {
   phone: string;
   totalOrders: number;
   totalRevenue: number;
+  lastServiceDate: string;
   orders: any[];
-  lastServiceDate?: string;
 }
+
+// Alias para compatibilidade com componentes existentes
+export type CustomerReportData = CustomerData;
 
 // Interface para dados de veículo
 export interface VehicleData {
@@ -50,8 +55,12 @@ export interface VehicleData {
   customerName: string;
   totalOrders: number;
   totalRevenue: number;
+  lastServiceDate: string;
   orders: any[];
 }
+
+// Alias para compatibilidade com componentes existentes
+export type VehicleReportData = VehicleData;
 
 // Interface para dados de serviço
 export interface ServiceData {

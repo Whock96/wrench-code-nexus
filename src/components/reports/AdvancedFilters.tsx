@@ -12,7 +12,7 @@ import { Switch } from "@/components/ui/switch";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Card, CardContent } from "@/components/ui/card";
 import { Filter, RefreshCw, X } from "lucide-react";
-import { ReportFilters } from "@/hooks/useCachedReportData";
+import { ReportFilters } from "@/types/report-types";
 import { supabase } from "@/integrations/supabase/client";
 
 interface AdvancedFiltersProps {

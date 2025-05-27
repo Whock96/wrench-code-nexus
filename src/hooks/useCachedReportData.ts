@@ -1,7 +1,6 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { DateRange } from "react-day-picker";
 import { format, parseISO, subDays } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
@@ -247,20 +246,24 @@ export function useCachedReportData(
           phone: order.customers?.phone || "",
           totalOrders: 0,
           totalRevenue: 0,
-          orders: [],
-          lastServiceDate: order.created_at
+          lastServiceDate: "",
+          orders: []
         });
       }
       
       const customerData = customerMap.get(customerId)!;
       customerData.totalOrders += 1;
       customerData.totalRevenue += (order.total_amount || 0);
-      customerData.orders.push(order);
       
-      // Atualizar última data de serviço
-      if (order.created_at && (!customerData.lastServiceDate || order.created_at > customerData.lastServiceDate)) {
-        customerData.lastServiceDate = order.created_at;
+      // Atualizar a data do último serviço se for mais recente
+      const orderDate = order.created_at;
+      if (orderDate) {
+        if (!customerData.lastServiceDate || new Date(orderDate) > new Date(customerData.lastServiceDate)) {
+          customerData.lastServiceDate = orderDate;
+        }
       }
+      
+      customerData.orders.push(order);
     });
     
     // Converter para array e ordenar por receita
@@ -286,6 +289,7 @@ export function useCachedReportData(
           customerName: order.customers?.name || "Cliente Desconhecido",
           totalOrders: 0,
           totalRevenue: 0,
+          lastServiceDate: "",
           orders: []
         });
       }
@@ -293,6 +297,15 @@ export function useCachedReportData(
       const vehicleData = vehicleMap.get(vehicleId)!;
       vehicleData.totalOrders += 1;
       vehicleData.totalRevenue += (order.total_amount || 0);
+      
+      // Atualizar a data do último serviço se for mais recente
+      const orderDate = order.created_at;
+      if (orderDate) {
+        if (!vehicleData.lastServiceDate || new Date(orderDate) > new Date(vehicleData.lastServiceDate)) {
+          vehicleData.lastServiceDate = orderDate;
+        }
+      }
+      
       vehicleData.orders.push(order);
     });
     

@@ -5,12 +5,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { FileText } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { CustomerReportData } from "@/hooks/useReportData";
+import { CustomerData } from "@/types/report-types";
 import { ReportExporter } from "@/services/report-exporter";
 import { DateRange } from "react-day-picker";
 
 interface CustomerReportTableProps {
-  data: CustomerReportData[];
+  data: CustomerData[];
   isLoading: boolean;
   dateRange: DateRange | undefined;
   title?: string;

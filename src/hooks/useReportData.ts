@@ -4,6 +4,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { DateRange } from "react-day-picker";
 import { format, startOfMonth, endOfMonth, eachMonthOfInterval } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { 
+  CustomerData,
+  VehicleData
+} from "@/types/report-types";
 
 interface ReportStats {
   totalRevenue: number;
@@ -30,34 +34,14 @@ interface ServiceTrend {
   completed: number;
 }
 
-export interface CustomerReportData {
-  id: string;
-  name: string;
-  totalOrders: number;
-  totalRevenue: number;
-  lastServiceDate: string;
-}
-
-export interface VehicleReportData {
-  id: string;
-  licensePlate: string;
-  make: string;
-  model: string;
-  year: number;
-  customerName: string;
-  totalOrders: number;
-  totalRevenue: number;
-  lastServiceDate: string;
-}
-
 export const useReportData = (dateRange: DateRange | undefined) => {
   const [isLoading, setIsLoading] = useState(true);
   const [stats, setStats] = useState<ReportStats | null>(null);
   const [revenueByPeriod, setRevenueByPeriod] = useState<RevenueByPeriod[]>([]);
   const [statusDistribution, setStatusDistribution] = useState<StatusDistribution[]>([]);
   const [serviceTrend, setServiceTrend] = useState<ServiceTrend[]>([]);
-  const [customerReport, setCustomerReport] = useState<CustomerReportData[]>([]);
-  const [vehicleReport, setVehicleReport] = useState<VehicleReportData[]>([]);
+  const [customerReport, setCustomerReport] = useState<CustomerData[]>([]);
+  const [vehicleReport, setVehicleReport] = useState<VehicleData[]>([]);
   const [isLoadingCustomerReport, setIsLoadingCustomerReport] = useState(false);
   const [isLoadingVehicleReport, setIsLoadingVehicleReport] = useState(false);
 
@@ -260,7 +244,7 @@ export const useReportData = (dateRange: DateRange | undefined) => {
       if (serviceOrdersError) throw serviceOrdersError;
       
       // Processar os dados para o formato do relatório
-      const customerReportData: CustomerReportData[] = [];
+      const customerReportData: CustomerData[] = [];
       
       // Agrupar por cliente
       const customerMap = new Map<string, {
@@ -309,9 +293,12 @@ export const useReportData = (dateRange: DateRange | undefined) => {
           customerReportData.push({
             id: item.id,
             name: item.name,
+            email: "",
+            phone: "",
             totalOrders: item.orders.length,
             totalRevenue: item.revenue,
-            lastServiceDate: item.lastServiceDate
+            lastServiceDate: item.lastServiceDate,
+            orders: item.orders
           });
         });
       
@@ -354,7 +341,7 @@ export const useReportData = (dateRange: DateRange | undefined) => {
       if (serviceOrdersError) throw serviceOrdersError;
       
       // Processar os dados para o formato do relatório
-      const vehicleReportData: VehicleReportData[] = [];
+      const vehicleReportData: VehicleData[] = [];
       
       // Agrupar por veículo
       const vehicleMap = new Map<string, {
@@ -416,7 +403,8 @@ export const useReportData = (dateRange: DateRange | undefined) => {
             customerName: item.customerName,
             totalOrders: item.orders.length,
             totalRevenue: item.revenue,
-            lastServiceDate: item.lastServiceDate
+            lastServiceDate: item.lastServiceDate,
+            orders: item.orders
           });
         });
       
