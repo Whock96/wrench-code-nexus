@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { format, parseISO, subDays } from "date-fns";
@@ -285,7 +284,7 @@ export function useCachedReportData(
           licensePlate: vehicleInfo.license_plate || "N/A",
           make: vehicleInfo.make || "N/A",
           model: vehicleInfo.model || "N/A",
-          year: vehicleInfo.year || "N/A",
+          year: Number(vehicleInfo.year) || 0, // Converter para number sempre
           customerName: order.customers?.name || "Cliente Desconhecido",
           totalOrders: 0,
           totalRevenue: 0,

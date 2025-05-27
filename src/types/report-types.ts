@@ -42,25 +42,19 @@ export interface CustomerData {
   orders: any[];
 }
 
-// Alias para compatibilidade com componentes existentes
-export type CustomerReportData = CustomerData;
-
-// Interface para dados de veículo
+// Interface para dados de veículo - year padronizado como number
 export interface VehicleData {
   id: string;
   licensePlate: string;
   make: string;
   model: string;
-  year: string | number;
+  year: number; // Padronizado como number apenas
   customerName: string;
   totalOrders: number;
   totalRevenue: number;
   lastServiceDate: string;
   orders: any[];
 }
-
-// Alias para compatibilidade com componentes existentes
-export type VehicleReportData = VehicleData;
 
 // Interface para dados de serviço
 export interface ServiceData {
