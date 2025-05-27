@@ -2,36 +2,32 @@
 import { useState, useEffect, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { DateRange } from "react-day-picker";
-import { format, parseISO, isEqual, subDays } from "date-fns";
+import { format, parseISO, subDays } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
-
-// Tipos de relatórios
-export type ReportType = 
-  | "overview" 
-  | "customer" 
-  | "vehicle" 
-  | "service" 
-  | "technician";
-
-// Interface para filtros avançados
-export interface ReportFilters {
-  dateRange: DateRange | undefined;
-  customerId?: string;
-  vehicleId?: string;
-  technicianId?: string;
-  status?: string;
-  serviceType?: string;
-  minAmount?: number;
-  maxAmount?: number;
-  compareWithPreviousPeriod?: boolean;
-}
+import { 
+  ReportType, 
+  ReportFilters, 
+  ProcessedReportData,
+  OverviewData,
+  CustomerData,
+  VehicleData,
+  ServiceData,
+  TechnicianData
+} from "@/types/report-types";
 
 // Hook principal para dados de relatório com cache
 export function useCachedReportData(
   reportType: ReportType,
   filters: ReportFilters
-) {
+): {
+  data: ProcessedReportData | undefined;
+  isLoading: boolean;
+  isError: boolean;
+  error: Error | null;
+  refreshData: () => void;
+  clearReportCache: () => void;
+} {
   const queryClient = useQueryClient();
   
   // Gerar uma chave única para o cache baseada no tipo de relatório e filtros
@@ -54,7 +50,7 @@ export function useCachedReportData(
   }, [reportType, filters]);
   
   // Função para buscar dados com base no tipo de relatório e filtros
-  const fetchReportData = async () => {
+  const fetchReportData = async (): Promise<ProcessedReportData> => {
     const { dateRange, customerId, vehicleId, technicianId, status, serviceType, minAmount, maxAmount } = filters;
     
     if (!dateRange?.from) {
@@ -123,7 +119,7 @@ export function useCachedReportData(
     serviceType?: string,
     minAmount?: number,
     maxAmount?: number
-  ) => {
+  ): Promise<OverviewData | CustomerData[] | VehicleData[] | ServiceData[] | TechnicianData[]> => {
     // Base query para filtrar por período
     let query = supabase
       .from("service_orders")
@@ -193,12 +189,12 @@ export function useCachedReportData(
       case "technician":
         return processTechnicianData(filteredData);
       default:
-        return filteredData;
+        return filteredData as any;
     }
   };
   
   // Funções de processamento para cada tipo de relatório
-  const processOverviewData = (data: any[]) => {
+  const processOverviewData = (data: any[]): OverviewData => {
     // Total de OS
     const totalOrders = data.length;
     
@@ -235,9 +231,9 @@ export function useCachedReportData(
     };
   };
   
-  const processCustomerData = (data: any[]) => {
+  const processCustomerData = (data: any[]): CustomerData[] => {
     // Agrupar por cliente
-    const customerMap = new Map();
+    const customerMap = new Map<string, CustomerData>();
     
     data.forEach(order => {
       const customerId = order.customer_id;
@@ -251,14 +247,20 @@ export function useCachedReportData(
           phone: order.customers?.phone || "",
           totalOrders: 0,
           totalRevenue: 0,
-          orders: []
+          orders: [],
+          lastServiceDate: order.created_at
         });
       }
       
-      const customerData = customerMap.get(customerId);
+      const customerData = customerMap.get(customerId)!;
       customerData.totalOrders += 1;
       customerData.totalRevenue += (order.total_amount || 0);
       customerData.orders.push(order);
+      
+      // Atualizar última data de serviço
+      if (order.created_at && (!customerData.lastServiceDate || order.created_at > customerData.lastServiceDate)) {
+        customerData.lastServiceDate = order.created_at;
+      }
     });
     
     // Converter para array e ordenar por receita
@@ -266,9 +268,9 @@ export function useCachedReportData(
       .sort((a, b) => b.totalRevenue - a.totalRevenue);
   };
   
-  const processVehicleData = (data: any[]) => {
+  const processVehicleData = (data: any[]): VehicleData[] => {
     // Agrupar por veículo
-    const vehicleMap = new Map();
+    const vehicleMap = new Map<string, VehicleData>();
     
     data.forEach(order => {
       const vehicleId = order.vehicle_id;
@@ -288,7 +290,7 @@ export function useCachedReportData(
         });
       }
       
-      const vehicleData = vehicleMap.get(vehicleId);
+      const vehicleData = vehicleMap.get(vehicleId)!;
       vehicleData.totalOrders += 1;
       vehicleData.totalRevenue += (order.total_amount || 0);
       vehicleData.orders.push(order);
@@ -299,7 +301,7 @@ export function useCachedReportData(
       .sort((a, b) => b.totalRevenue - a.totalRevenue);
   };
   
-  const processServiceData = (data: any[]) => {
+  const processServiceData = (data: any[]): ServiceData[] => {
     // Extrair todos os itens de serviço
     const allItems: any[] = [];
     data.forEach(order => {
@@ -315,7 +317,7 @@ export function useCachedReportData(
     });
     
     // Agrupar por tipo de serviço/item
-    const serviceMap = new Map();
+    const serviceMap = new Map<string, ServiceData>();
     
     allItems.forEach(item => {
       const itemKey = `${item.item_type}-${item.description}`;
@@ -331,7 +333,7 @@ export function useCachedReportData(
         });
       }
       
-      const serviceData = serviceMap.get(itemKey);
+      const serviceData = serviceMap.get(itemKey)!;
       serviceData.totalQuantity += (item.quantity || 1);
       serviceData.totalRevenue += (item.total_price || 0);
       serviceData.occurrences += 1;
@@ -343,10 +345,10 @@ export function useCachedReportData(
       .sort((a, b) => b.totalRevenue - a.totalRevenue);
   };
   
-  const processTechnicianData = (data: any[]) => {
+  const processTechnicianData = (data: any[]): TechnicianData[] => {
     // Este é um placeholder - em um sistema real, você teria uma tabela de técnicos
     // Por enquanto, vamos extrair informações dos técnicos das notas
-    const technicianMap = new Map();
+    const technicianMap = new Map<string, TechnicianData>();
     
     data.forEach(order => {
       // Extrair nome do técnico das notas (simulação)
@@ -370,7 +372,7 @@ export function useCachedReportData(
         });
       }
       
-      const techData = technicianMap.get(techName);
+      const techData = technicianMap.get(techName)!;
       techData.totalOrders += 1;
       techData.totalRevenue += (order.total_amount || 0);
       
@@ -388,16 +390,16 @@ export function useCachedReportData(
       .sort((a, b) => b.totalOrders - a.totalOrders);
   };
   
-  // Usar React Query para cache inteligente com API v5
+  // Usar React Query para cache inteligente
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: cacheKey,
     queryFn: fetchReportData,
     staleTime: 5 * 60 * 1000, // 5 minutos
-    gcTime: 30 * 60 * 1000, // 30 minutos (substituiu cacheTime)
+    gcTime: 30 * 60 * 1000, // 30 minutos
     retry: 1
   });
   
-  // Tratamento de erro via useEffect (compatível com TanStack Query v5)
+  // Tratamento de erro via useEffect
   useEffect(() => {
     if (isError && error) {
       toast({
@@ -430,7 +432,7 @@ export function useCachedReportData(
     data,
     isLoading,
     isError,
-    error,
+    error: error as Error | null,
     refreshData,
     clearReportCache
   };
