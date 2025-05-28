@@ -12,6 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useCountries } from '@/hooks/useCountries';
 import { useShop } from '@/hooks/useShop';
+import { Json } from '@/integrations/supabase/types';
 
 interface AddressData {
   street: string;
@@ -21,18 +22,6 @@ interface AddressData {
   zip_code: string;
   country: string;
 }
-
-const isValidAddress = (address: any): address is AddressData => {
-  return (
-    address &&
-    typeof address === 'object' &&
-    'street' in address &&
-    'number' in address &&
-    'city' in address &&
-    'state' in address &&
-    'zip_code' in address
-  );
-};
 
 const ClientForm: React.FC = () => {
   const navigate = useNavigate();
@@ -64,6 +53,47 @@ const ClientForm: React.FC = () => {
     notes: "",
   });
 
+  // Helper functions for type conversion
+  const addressToJson = (address: AddressData): Json => {
+    return address as unknown as Json;
+  };
+
+  const jsonToAddress = (json: Json | null): AddressData => {
+    if (!json) {
+      return {
+        street: "",
+        number: "",
+        city: "",
+        state: "",
+        zip_code: "",
+        country: "Brasil",
+      };
+    }
+    
+    // If it's an object, try to extract the fields
+    if (typeof json === 'object' && json !== null) {
+      const obj = json as Record<string, any>;
+      return {
+        street: obj.street || "",
+        number: obj.number || "",
+        city: obj.city || "",
+        state: obj.state || "",
+        zip_code: obj.zip_code || "",
+        country: obj.country || "Brasil",
+      };
+    }
+    
+    // Fallback to empty object
+    return {
+      street: "",
+      number: "",
+      city: "",
+      state: "",
+      zip_code: "",
+      country: "Brasil",
+    };
+  };
+
   useEffect(() => {
     if (isEditing && id) {
       loadClient();
@@ -81,51 +111,6 @@ const ClientForm: React.FC = () => {
 
       if (error) throw error;
 
-      // Validar e processar o campo address
-      let addressData = data.address;
-      
-      // Se address for null ou undefined, usar o objeto vazio padrão
-      if (!addressData) {
-        addressData = {
-          street: "",
-          number: "",
-          city: "",
-          state: "",
-          zip_code: "",
-          country: "Brasil",
-        };
-      } 
-      // Se for string (pode acontecer com JSON stringificado), tentar fazer parse
-      else if (typeof addressData === 'string') {
-        try {
-          addressData = JSON.parse(addressData);
-        } catch (e) {
-          console.error('Error parsing address string:', e);
-          addressData = {
-            street: "",
-            number: "",
-            city: "",
-            state: "",
-            zip_code: "",
-            country: "Brasil",
-          };
-        }
-      }
-      
-      // Verificar se o objeto tem a estrutura esperada
-      if (!isValidAddress(addressData)) {
-        // Se não tiver, criar um objeto com a estrutura correta
-        // mantendo os campos existentes quando possível
-        addressData = {
-          street: (addressData as any)?.street || "",
-          number: (addressData as any)?.number || "",
-          city: (addressData as any)?.city || "",
-          state: (addressData as any)?.state || "",
-          zip_code: (addressData as any)?.zip_code || "",
-          country: (addressData as any)?.country || "Brasil",
-        };
-      }
-
       setFormData({
         name: data.name,
         email: data.email || "",
@@ -135,7 +120,7 @@ const ClientForm: React.FC = () => {
         country_code: data.country_code || "BR",
         locale: data.locale || "pt-BR",
         birth_date: data.birth_date || "",
-        address: addressData,
+        address: jsonToAddress(data.address),
         notes: data.notes || "",
       });
     } catch (error: any) {
@@ -177,6 +162,7 @@ const ClientForm: React.FC = () => {
 
       const clientData = {
         ...formData,
+        address: addressToJson(formData.address),
         shop_id: shopId,
         updated_at: new Date().toISOString(),
       };
