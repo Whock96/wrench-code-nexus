@@ -1,12 +1,12 @@
 
 import { Home, Users, Car, Wrench, Bell, Settings, BarChart3, Globe, TestTube } from "lucide-react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useShop } from "@/hooks/useShop";
 
 interface SidebarMenuProps {
-  onNavigate: (path: string) => void;
+  onNavigate?: (path: string) => void;
 }
 
 interface NavItemProps {
@@ -33,7 +33,16 @@ const NavItem = ({ href, icon, label, onClick, isActive }: NavItemProps) => (
 
 export const SidebarMenu = ({ onNavigate }: SidebarMenuProps) => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { isAdmin } = useShop();
+
+  const handleNavigate = (path: string) => {
+    if (onNavigate) {
+      onNavigate(path);
+    } else {
+      navigate(path);
+    }
+  };
 
   const menuItems = [
     { href: "/dashboard", icon: <Home className="h-4 w-4" />, label: "Dashboard" },
@@ -62,7 +71,7 @@ export const SidebarMenu = ({ onNavigate }: SidebarMenuProps) => {
             href={item.href}
             icon={item.icon}
             label={item.label}
-            onClick={() => onNavigate(item.href)}
+            onClick={() => handleNavigate(item.href)}
             isActive={location.pathname === item.href}
           />
         ))}
@@ -79,7 +88,7 @@ export const SidebarMenu = ({ onNavigate }: SidebarMenuProps) => {
               href={item.href}
               icon={item.icon}
               label={item.label}
-              onClick={() => onNavigate(item.href)}
+              onClick={() => handleNavigate(item.href)}
               isActive={location.pathname === item.href}
             />
           ))}
@@ -98,7 +107,7 @@ export const SidebarMenu = ({ onNavigate }: SidebarMenuProps) => {
                 href={item.href}
                 icon={item.icon}
                 label={item.label}
-                onClick={() => onNavigate(item.href)}
+                onClick={() => handleNavigate(item.href)}
                 isActive={location.pathname === item.href}
               />
             ))}

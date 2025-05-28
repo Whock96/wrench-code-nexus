@@ -13,6 +13,27 @@ import { supabase } from '@/integrations/supabase/client';
 import { useCountries } from '@/hooks/useCountries';
 import { useShop } from '@/hooks/useShop';
 
+interface AddressData {
+  street: string;
+  number: string;
+  city: string;
+  state: string;
+  zip_code: string;
+  country: string;
+}
+
+const isValidAddress = (address: any): address is AddressData => {
+  return (
+    address &&
+    typeof address === 'object' &&
+    'street' in address &&
+    'number' in address &&
+    'city' in address &&
+    'state' in address &&
+    'zip_code' in address
+  );
+};
+
 const ClientForm: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams();
@@ -39,7 +60,7 @@ const ClientForm: React.FC = () => {
       state: "",
       zip_code: "",
       country: "Brasil",
-    },
+    } as AddressData,
     notes: "",
   });
 
@@ -60,6 +81,51 @@ const ClientForm: React.FC = () => {
 
       if (error) throw error;
 
+      // Validar e processar o campo address
+      let addressData = data.address;
+      
+      // Se address for null ou undefined, usar o objeto vazio padrão
+      if (!addressData) {
+        addressData = {
+          street: "",
+          number: "",
+          city: "",
+          state: "",
+          zip_code: "",
+          country: "Brasil",
+        };
+      } 
+      // Se for string (pode acontecer com JSON stringificado), tentar fazer parse
+      else if (typeof addressData === 'string') {
+        try {
+          addressData = JSON.parse(addressData);
+        } catch (e) {
+          console.error('Error parsing address string:', e);
+          addressData = {
+            street: "",
+            number: "",
+            city: "",
+            state: "",
+            zip_code: "",
+            country: "Brasil",
+          };
+        }
+      }
+      
+      // Verificar se o objeto tem a estrutura esperada
+      if (!isValidAddress(addressData)) {
+        // Se não tiver, criar um objeto com a estrutura correta
+        // mantendo os campos existentes quando possível
+        addressData = {
+          street: (addressData as any)?.street || "",
+          number: (addressData as any)?.number || "",
+          city: (addressData as any)?.city || "",
+          state: (addressData as any)?.state || "",
+          zip_code: (addressData as any)?.zip_code || "",
+          country: (addressData as any)?.country || "Brasil",
+        };
+      }
+
       setFormData({
         name: data.name,
         email: data.email || "",
@@ -69,14 +135,7 @@ const ClientForm: React.FC = () => {
         country_code: data.country_code || "BR",
         locale: data.locale || "pt-BR",
         birth_date: data.birth_date || "",
-        address: data.address || {
-          street: "",
-          number: "",
-          city: "",
-          state: "",
-          zip_code: "",
-          country: "Brasil",
-        },
+        address: addressData,
         notes: data.notes || "",
       });
     } catch (error: any) {
