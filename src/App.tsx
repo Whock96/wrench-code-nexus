@@ -26,7 +26,6 @@ import ServiceOrderDetail from "./pages/service-orders/ServiceOrderDetail";
 import NotificationCenter from "./pages/notifications/NotificationCenter";
 import NotificationPreferencesPage from "./pages/settings/NotificationPreferencesPage";
 import RegionalSettings from "./pages/settings/RegionalSettings";
-import TestAccounts from "./pages/admin/TestAccounts";
 import ReportsDashboard from "./pages/reports/ReportsDashboard";
 import NotFound from "./pages/NotFound";
 
@@ -77,9 +76,6 @@ const App = () => (
             
             {/* Settings */}
             <Route path="/settings/regional" element={<RegionalSettings />} />
-            
-            {/* Admin */}
-            <Route path="/admin/test-accounts" element={<TestAccounts />} />
             
             {/* 404 */}
             <Route path="*" element={<NotFound />} />
