@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -35,6 +34,10 @@ import ServiceOrderDetail from "./pages/service-orders/ServiceOrderDetail";
 
 // Reports Pages
 import ReportsDashboard from "./pages/reports/ReportsDashboard";
+
+// Notification Pages
+import NotificationCenter from "./pages/notifications/NotificationCenter";
+import NotificationPreferencesPage from "./pages/settings/NotificationPreferencesPage";
 
 // Shared Pages
 import NotFound from "./pages/NotFound";
@@ -81,6 +84,10 @@ const App = () => (
             
             {/* Reports Routes */}
             <Route path="/reports" element={<ReportsDashboard />} />
+            
+            {/* Notification Routes */}
+            <Route path="/notifications" element={<NotificationCenter />} />
+            <Route path="/settings/notifications" element={<NotificationPreferencesPage />} />
             
             {/* Catch-all Route */}
             <Route path="*" element={<NotFound />} />

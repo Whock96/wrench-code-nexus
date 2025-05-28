@@ -94,6 +94,233 @@ export type Database = {
           },
         ]
       }
+      maintenance_alerts: {
+        Row: {
+          active: boolean
+          alert_threshold_days: number | null
+          alert_threshold_km: number | null
+          created_at: string
+          description: string | null
+          id: string
+          km_interval: number | null
+          last_service_date: string | null
+          last_service_km: number | null
+          next_service_due_date: string | null
+          next_service_due_km: number | null
+          service_type: string
+          shop_id: string
+          time_interval_days: number | null
+          updated_at: string
+          vehicle_id: string | null
+        }
+        Insert: {
+          active?: boolean
+          alert_threshold_days?: number | null
+          alert_threshold_km?: number | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          km_interval?: number | null
+          last_service_date?: string | null
+          last_service_km?: number | null
+          next_service_due_date?: string | null
+          next_service_due_km?: number | null
+          service_type: string
+          shop_id: string
+          time_interval_days?: number | null
+          updated_at?: string
+          vehicle_id?: string | null
+        }
+        Update: {
+          active?: boolean
+          alert_threshold_days?: number | null
+          alert_threshold_km?: number | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          km_interval?: number | null
+          last_service_date?: string | null
+          last_service_km?: number | null
+          next_service_due_date?: string | null
+          next_service_due_km?: number | null
+          service_type?: string
+          shop_id?: string
+          time_interval_days?: number | null
+          updated_at?: string
+          vehicle_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "maintenance_alerts_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "maintenance_alerts_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notification_logs: {
+        Row: {
+          delivery_type: string
+          error_message: string | null
+          id: string
+          metadata: Json | null
+          notification_id: string
+          processed_at: string | null
+          recipient: string | null
+          sent_at: string | null
+          status: string
+        }
+        Insert: {
+          delivery_type: string
+          error_message?: string | null
+          id?: string
+          metadata?: Json | null
+          notification_id: string
+          processed_at?: string | null
+          recipient?: string | null
+          sent_at?: string | null
+          status: string
+        }
+        Update: {
+          delivery_type?: string
+          error_message?: string | null
+          id?: string
+          metadata?: Json | null
+          notification_id?: string
+          processed_at?: string | null
+          recipient?: string | null
+          sent_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_logs_notification_id_fkey"
+            columns: ["notification_id"]
+            isOneToOne: false
+            referencedRelation: "notifications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notification_preferences: {
+        Row: {
+          created_at: string
+          email_enabled: boolean
+          id: string
+          in_app_enabled: boolean
+          notification_type: string
+          shop_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email_enabled?: boolean
+          id?: string
+          in_app_enabled?: boolean
+          notification_type: string
+          shop_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email_enabled?: boolean
+          id?: string
+          in_app_enabled?: boolean
+          notification_type?: string
+          shop_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_preferences_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notification_preferences_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notifications: {
+        Row: {
+          content: string
+          created_at: string
+          expires_at: string | null
+          id: string
+          link: string | null
+          metadata: Json | null
+          priority: string
+          read: boolean
+          read_at: string | null
+          shop_id: string
+          title: string
+          type: string
+          user_id: string | null
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          link?: string | null
+          metadata?: Json | null
+          priority?: string
+          read?: boolean
+          read_at?: string | null
+          shop_id: string
+          title: string
+          type: string
+          user_id?: string | null
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          link?: string | null
+          metadata?: Json | null
+          priority?: string
+          read?: boolean
+          read_at?: string | null
+          shop_id?: string
+          title?: string
+          type?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       service_items: {
         Row: {
           created_at: string | null
@@ -564,7 +791,19 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      create_notification_secure: {
+        Args: {
+          p_shop_id: string
+          p_user_id: string
+          p_title: string
+          p_content: string
+          p_type: string
+          p_priority?: string
+          p_link?: string
+          p_metadata?: Json
+        }
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never

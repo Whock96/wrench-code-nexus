@@ -1,1 +1,52 @@
+
 project_id = "qvjoldaphzuvlxbrptiq"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[auth]
+enabled = true
+port = 54324
+site_url = "http://localhost:3000"
+additional_redirect_urls = ["https://lovable.dev"]
+jwt_expiry = 3600
+refresh_token_rotation_enabled = true
+secure_nonce = true
+
+[auth.email]
+enable_signup = true
+double_confirm_changes = true
+enable_confirmations = false
+
+[db]
+port = 54322
+
+[db.pooler]
+enabled = false
+port = 54329
+pool_mode = "transaction"
+default_pool_size = 20
+max_client_conn = 100
+
+[realtime]
+enabled = true
+port = 54323
+
+[storage]
+enabled = true
+port = 54324
+file_size_limit = "50MiB"
+
+[edge_functions]
+enabled = true
+port = 54325
+
+[functions.send-email-notification]
+verify_jwt = false
+
+[functions.process-maintenance-alerts]
+verify_jwt = false
