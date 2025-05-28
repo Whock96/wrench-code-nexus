@@ -21,6 +21,19 @@ export interface ReportFilters {
   compareWithPreviousPeriod?: boolean;
 }
 
+// Interface para dados de gráfico de faturamento
+export interface RevenueData {
+  period: string;
+  revenue: number;
+}
+
+// Interface para dados de gráfico de distribuição de status
+export interface StatusData {
+  status: string;
+  count: number;
+  color: string;
+}
+
 // Interface para dados de visão geral
 export interface OverviewData {
   totalOrders: number;

@@ -6,7 +6,9 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { 
   CustomerData, 
-  VehicleData 
+  VehicleData,
+  RevenueData,
+  StatusData
 } from "@/types/report-types";
 
 // Declaração para TypeScript reconhecer o método autoTable
@@ -176,6 +178,127 @@ export class ReportExporter {
     
     // Download
     doc.save(`relatorio-veiculos-${format(new Date(), "yyyy-MM-dd")}.pdf`);
+  }
+
+  // Exportar gráfico de faturamento para PDF
+  static exportRevenueToPDF(
+    data: RevenueData[],
+    dateRange: { from: Date; to: Date }
+  ): void {
+    const doc = new jsPDF();
+    
+    // Título
+    doc.setFontSize(18);
+    doc.text("Relatório de Faturamento", 14, 22);
+    
+    // Período
+    doc.setFontSize(11);
+    doc.text(
+      `Período: ${format(dateRange.from, "dd/MM/yyyy", { locale: ptBR })} a ${format(
+        dateRange.to,
+        "dd/MM/yyyy",
+        { locale: ptBR }
+      )}`,
+      14,
+      32
+    );
+    
+    // Tabela
+    const tableData = data.map(item => [
+      item.period,
+      this.formatCurrency(item.revenue)
+    ]);
+    
+    doc.autoTable({
+      head: [["Período", "Faturamento"]],
+      body: tableData,
+      startY: 40,
+      theme: "grid",
+      styles: { fontSize: 10, cellPadding: 3 },
+      headStyles: { fillColor: [66, 66, 66] }
+    });
+    
+    // Total
+    const totalRevenue = data.reduce((sum, item) => sum + item.revenue, 0);
+    
+    doc.setFontSize(12);
+    doc.text(
+      `Faturamento Total: ${this.formatCurrency(totalRevenue)}`,
+      14,
+      (doc as any).previousAutoTable.finalY + 10
+    );
+    
+    // Rodapé
+    doc.setFontSize(10);
+    doc.text(
+      `Relatório gerado em ${format(new Date(), "dd/MM/yyyy HH:mm", { locale: ptBR })}`,
+      14,
+      doc.internal.pageSize.height - 10
+    );
+    
+    // Download
+    doc.save(`relatorio-faturamento-${format(new Date(), "yyyy-MM-dd")}.pdf`);
+  }
+
+  // Exportar gráfico de distribuição de status para PDF
+  static exportStatusDistributionToPDF(
+    data: StatusData[],
+    dateRange: { from: Date; to: Date }
+  ): void {
+    const doc = new jsPDF();
+    
+    // Título
+    doc.setFontSize(18);
+    doc.text("Distribuição de Status", 14, 22);
+    
+    // Período
+    doc.setFontSize(11);
+    doc.text(
+      `Período: ${format(dateRange.from, "dd/MM/yyyy", { locale: ptBR })} a ${format(
+        dateRange.to,
+        "dd/MM/yyyy",
+        { locale: ptBR }
+      )}`,
+      14,
+      32
+    );
+    
+    // Tabela
+    const tableData = data.map(item => [
+      this.translateStatus(item.status),
+      item.count.toString(),
+      `${((item.count / data.reduce((sum, i) => sum + i.count, 0)) * 100).toFixed(2)}%`
+    ]);
+    
+    doc.autoTable({
+      head: [["Status", "Quantidade", "Porcentagem"]],
+      body: tableData,
+      startY: 40,
+      theme: "grid",
+      styles: { fontSize: 10, cellPadding: 3 },
+      headStyles: { fillColor: [66, 66, 66] }
+    });
+    
+    // Total
+    const totalOrders = data.reduce((sum, item) => sum + item.count, 0);
+    
+    doc.setFontSize(12);
+    doc.text(
+      `Total de Ordens: ${totalOrders}`,
+      14,
+      (doc as any).previousAutoTable.finalY + 10
+    );
+    
+    // Rodapé
+    doc.setFontSize(10);
+    doc.text(
+      `Relatório gerado em ${format(new Date(), "dd/MM/yyyy HH:mm", { locale: ptBR })}`,
+      14,
+      doc.internal.pageSize.height - 10
+    );
+    
+    // Download
+    doc.save(`relatorio-status-${format(new Date(), "yyyy-MM-dd")}.pdf`);
   }
   
   // Exportar relatório para Excel (genérico)
