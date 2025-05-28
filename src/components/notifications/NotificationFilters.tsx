@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Calendar, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { DatePickerWithRange } from '@/components/ui/date-range-picker';
+import { DateRangePicker } from '@/components/ui/date-range-picker';
 import { NotificationFilters, NOTIFICATION_TYPE_LABELS } from '@/types/notification-types';
 import { DateRange } from 'react-day-picker';
 
@@ -23,10 +23,10 @@ export const NotificationFiltersComponent = ({ filters, onFiltersChange }: Notif
     onFiltersChange({ ...filters, status });
   };
 
-  const handleDateRangeChange = (dateRange: DateRange | undefined) => {
+  const handleDateRangeChange = (range: { range: DateRange | undefined, rangeCompare?: DateRange | undefined }) => {
     onFiltersChange({ 
       ...filters, 
-      dateRange: dateRange ? { from: dateRange.from!, to: dateRange.to } : undefined 
+      dateRange: range.range ? { from: range.range.from!, to: range.range.to } : undefined 
     });
   };
 
@@ -83,9 +83,9 @@ export const NotificationFiltersComponent = ({ filters, onFiltersChange }: Notif
       
       {showDatePicker && (
         <div className="mt-4">
-          <DatePickerWithRange
-            value={filters.dateRange}
-            onChange={handleDateRangeChange}
+          <DateRangePicker
+            date={filters.dateRange}
+            onUpdate={handleDateRangeChange}
           />
         </div>
       )}
