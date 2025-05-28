@@ -2,6 +2,7 @@
 import React from "react";
 import { cn } from "@/lib/utils";
 import { Button, ButtonProps } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
 
 interface FormActionsProps {
   children?: React.ReactNode;
@@ -81,11 +82,14 @@ export const FormActions: React.FC<FormActionsProps> = ({
           variant={primaryAction.variant || "default"}
           onClick={primaryAction.onClick}
           disabled={primaryAction.disabled || primaryAction.loading}
+          className={cn(primaryAction.loading && "relative")}
         >
           {primaryAction.loading ? (
             <>
-              <div className="h-4 w-4 mr-2 animate-spin rounded-full border-2 border-current border-t-transparent" />
-              Loading...
+              <span className="opacity-0">{primaryAction.label}</span>
+              <span className="absolute inset-0 flex items-center justify-center">
+                <Loader2 className="h-4 w-4 animate-spin" />
+              </span>
             </>
           ) : (
             primaryAction.label

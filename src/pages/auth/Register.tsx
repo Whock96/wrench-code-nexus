@@ -122,7 +122,7 @@ const Register: React.FC = () => {
   const renderStep1 = () => (
     <>
       <div className="text-center mb-6">
-        <h1 className="text-2xl font-bold">Create your account</h1>
+        <h1 className="text-2xl font-bold" id="auth-title">Create your account</h1>
         <p className="text-muted-foreground mt-2">Step 1: Personal Information</p>
       </div>
       
@@ -193,10 +193,6 @@ const Register: React.FC = () => {
             onClick: handleStep1Next,
             type: "button",
           }}
-          tertiaryAction={{
-            label: "Already have an account? Sign in",
-            onClick: () => {/* handled by the Link below */},
-          }}
           align="center"
         />
         
@@ -212,7 +208,7 @@ const Register: React.FC = () => {
   const renderStep2 = () => (
     <>
       <div className="text-center mb-6">
-        <h1 className="text-2xl font-bold">Setup your shop</h1>
+        <h1 className="text-2xl font-bold" id="auth-title">Setup your shop</h1>
         <p className="text-muted-foreground mt-2">Step 2: Company Information</p>
       </div>
       

@@ -26,11 +26,15 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({ children }) => {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      <div className="flex-1 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+      <main 
+        className="flex-1 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8"
+        role="main"
+        aria-labelledby="auth-title"
+      >
         <div className="max-w-md w-full space-y-8 bg-card p-6 rounded-lg shadow-lg animate-fade-in">
           {children}
         </div>
-      </div>
+      </main>
       <footer className="p-4 border-t border-border text-center text-sm text-muted-foreground">
         &copy; {new Date().getFullYear()} Auto Shop Management System
       </footer>

@@ -62,7 +62,7 @@ const Login: React.FC = () => {
   return (
     <AuthLayout>
       <div className="text-center mb-6">
-        <h1 className="text-2xl font-bold">Welcome back</h1>
+        <h1 className="text-2xl font-bold" id="auth-title">Welcome back</h1>
         <p className="text-muted-foreground mt-2">Sign in to your account</p>
       </div>
       
@@ -99,19 +99,15 @@ const Login: React.FC = () => {
             type: "submit",
             loading: isLoading,
           }}
-          tertiaryAction={{
-            label: "Don't have an account? Sign up",
-            onClick: () => {/* handled by the Link below */},
-          }}
           align="center"
         />
+        
+        <div className="mt-4 text-center">
+          <Link to="/register" className="text-primary hover:underline">
+            Don't have an account? Sign up
+          </Link>
+        </div>
       </form>
-      
-      <div className="mt-4 text-center">
-        <Link to="/register" className="text-primary hover:underline">
-          Don't have an account? Sign up
-        </Link>
-      </div>
     </AuthLayout>
   );
 };

@@ -44,7 +44,7 @@ export const FormField: React.FC<FormFieldProps> = (props) => {
   return (
     <div className={cn("space-y-2", className)}>
       <Label htmlFor={id} className="flex">
-        {label} {required && <span className="ml-1 text-secondary">*</span>}
+        {label} {required && <span className="ml-1 text-destructive">*</span>}
       </Label>
       
       {props.type === "textarea" ? (
@@ -54,11 +54,20 @@ export const FormField: React.FC<FormFieldProps> = (props) => {
           value={props.value}
           onChange={props.onChange}
           rows={props.rows || 3}
-          className={cn(error && "border-destructive")}
+          className={cn(
+            error && "border-destructive animate-shake",
+            "transition-colors duration-200"
+          )}
         />
       ) : props.type === "select" ? (
         <Select value={props.value} onValueChange={props.onChange}>
-          <SelectTrigger id={id} className={cn(error && "border-destructive")}>
+          <SelectTrigger 
+            id={id} 
+            className={cn(
+              error && "border-destructive animate-shake",
+              "transition-colors duration-200"
+            )}
+          >
             <SelectValue />
           </SelectTrigger>
           {props.children}
@@ -70,11 +79,18 @@ export const FormField: React.FC<FormFieldProps> = (props) => {
           placeholder={props.placeholder}
           value={props.value}
           onChange={props.onChange}
-          className={cn(error && "border-destructive")}
+          className={cn(
+            error && "border-destructive animate-shake",
+            "transition-colors duration-200"
+          )}
         />
       )}
       
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      {error && (
+        <p className="text-sm text-destructive animate-fade-in">
+          {error}
+        </p>
+      )}
     </div>
   );
 };
