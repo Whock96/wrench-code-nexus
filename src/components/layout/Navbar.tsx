@@ -9,11 +9,37 @@ export const Navbar: React.FC = () => {
   const { user, logout } = useAuth();
 
   const handleLogout = async () => {
-    await logout();
+    try {
+      await logout();
+    } catch (error) {
+      console.error("Erro ao fazer logout:", error);
+    }
   };
 
   const getInitials = (firstName: string, lastName: string): string => {
-    return `${firstName[0] || ""}${lastName[0] || ""}`.toUpperCase();
+    return `${firstName?.[0] || ""}${lastName?.[0] || ""}`.toUpperCase();
+  };
+
+  const getUserInitials = () => {
+    if (!user) return "U";
+    
+    if (user.firstName && user.lastName) {
+      return getInitials(user.firstName, user.lastName);
+    }
+    
+    if (user.full_name) {
+      const names = user.full_name.split(" ");
+      if (names.length === 1) return names[0].charAt(0).toUpperCase();
+      return (names[0].charAt(0) + names[names.length - 1].charAt(0)).toUpperCase();
+    }
+    
+    return user.email?.charAt(0).toUpperCase() || "U";
+  };
+
+  const getUserDisplayName = () => {
+    if (user?.full_name) return user.full_name;
+    if (user?.firstName && user?.lastName) return `${user.firstName} ${user.lastName}`;
+    return user?.email || "Usuário";
   };
 
   return (
@@ -34,9 +60,9 @@ export const Navbar: React.FC = () => {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative rounded-full h-9 w-9 p-0">
                   <Avatar className="h-9 w-9">
-                    <AvatarImage src={user.profileImage} alt={`${user.firstName} ${user.lastName}`} />
+                    <AvatarImage src={user.profileImage} alt={getUserDisplayName()} />
                     <AvatarFallback className="bg-primary text-primary-foreground">
-                      {getInitials(user.firstName, user.lastName)}
+                      {getUserInitials()}
                     </AvatarFallback>
                   </Avatar>
                 </Button>
@@ -44,7 +70,7 @@ export const Navbar: React.FC = () => {
               <DropdownMenuContent className="w-56" align="end" forceMount>
                 <DropdownMenuLabel>
                   <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">{`${user.firstName} ${user.lastName}`}</p>
+                    <p className="text-sm font-medium leading-none">{getUserDisplayName()}</p>
                     <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
                   </div>
                 </DropdownMenuLabel>

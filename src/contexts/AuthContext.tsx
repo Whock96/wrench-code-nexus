@@ -1,8 +1,8 @@
 
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { User } from "@supabase/supabase-js";
-import { toast } from "@/components/ui/use-toast";
+import { User, Session } from "@supabase/supabase-js";
+import { toast } from "@/hooks/use-toast";
 
 interface AuthUser extends User {
   firstName?: string;
@@ -13,6 +13,7 @@ interface AuthUser extends User {
 
 interface AuthContextType {
   user: AuthUser | null;
+  session: Session | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
@@ -33,18 +34,28 @@ export const useAuth = () => {
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<AuthUser | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     // Get initial session
     const getSession = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session?.user) {
-          await loadUserProfile(session.user);
+        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        
+        if (currentSession?.user) {
+          await loadUserProfile(currentSession.user);
+          setSession(currentSession);
+          console.log("Sessão recuperada com sucesso:", currentSession.user.id);
+        } else {
+          setUser(null);
+          setSession(null);
+          console.log("Nenhuma sessão ativa encontrada");
         }
       } catch (error) {
         console.error("Error getting session:", error);
+        setUser(null);
+        setSession(null);
       } finally {
         setIsLoading(false);
       }
@@ -53,14 +64,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     getSession();
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log("Auth state changed:", event, session?.user?.id);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, newSession) => {
+      console.log("Auth state changed:", event, newSession?.user?.id);
       
-      if (session?.user) {
-        await loadUserProfile(session.user);
-      } else {
+      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        if (newSession?.user) {
+          await loadUserProfile(newSession.user);
+          setSession(newSession);
+        }
+      } else if (event === 'SIGNED_OUT') {
         setUser(null);
+        setSession(null);
       }
+      
       setIsLoading(false);
     });
 
@@ -102,18 +118,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (data.user) {
         await loadUserProfile(data.user);
-        toast({
-          title: "Login realizado com sucesso!",
-          description: "Bem-vindo de volta.",
-        });
+        setSession(data.session);
+        console.log("Login bem-sucedido:", data.user.id);
       }
     } catch (error: any) {
       console.error("Login error:", error);
-      toast({
-        title: "Erro no login",
-        description: error.message || "Ocorreu um erro ao fazer login.",
-        variant: "destructive",
-      });
       throw error;
     } finally {
       setIsLoading(false);
@@ -149,19 +158,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (profileError) {
           console.error("Error creating user profile:", profileError);
         }
-
-        toast({
-          title: "Conta criada com sucesso!",
-          description: "Verifique seu email para confirmar a conta.",
-        });
       }
     } catch (error: any) {
       console.error("Register error:", error);
-      toast({
-        title: "Erro no cadastro",
-        description: error.message || "Ocorreu um erro ao criar a conta.",
-        variant: "destructive",
-      });
       throw error;
     } finally {
       setIsLoading(false);
@@ -169,22 +168,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logout = async () => {
+    setIsLoading(true);
     try {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
 
       setUser(null);
-      toast({
-        title: "Logout realizado com sucesso!",
-        description: "Até logo!",
-      });
+      setSession(null);
+      console.log("Logout bem-sucedido");
     } catch (error: any) {
       console.error("Logout error:", error);
-      toast({
-        title: "Erro no logout",
-        description: error.message || "Ocorreu um erro ao fazer logout.",
-        variant: "destructive",
-      });
+      throw error;
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -195,24 +191,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
 
       if (error) throw error;
-
-      toast({
-        title: "Email enviado!",
-        description: "Verifique sua caixa de entrada para redefinir a senha.",
-      });
     } catch (error: any) {
       console.error("Reset password error:", error);
-      toast({
-        title: "Erro ao enviar email",
-        description: error.message || "Ocorreu um erro ao enviar o email.",
-        variant: "destructive",
-      });
       throw error;
     }
   };
 
   const value = {
     user,
+    session,
     isAuthenticated: !!user,
     isLoading,
     login,

@@ -1,6 +1,6 @@
 
-import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { AuthLayout } from "@/components/layout/AuthLayout";
 import { FormField } from "@/components/forms/FormField";
@@ -8,27 +8,38 @@ import { FormActions } from "@/components/forms/FormActions";
 import { useToast } from "@/hooks/use-toast";
 
 const Login: React.FC = () => {
-  const { login } = useAuth();
+  const { login, user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const location = useLocation();
   
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
   const [isLoading, setIsLoading] = useState(false);
 
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (user) {
+      const from = location.state?.from?.pathname || "/dashboard";
+      console.log("Usuário já autenticado. Redirecionando para:", from);
+      navigate(from, { replace: true });
+    }
+  }, [user, navigate, location]);
+
   const validateForm = (): boolean => {
     const newErrors: { email?: string; password?: string } = {};
     
     if (!email.trim()) {
-      newErrors.email = "Email is required";
+      newErrors.email = "Email é obrigatório";
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      newErrors.email = "Invalid email format";
+      newErrors.email = "Formato de email inválido";
     }
     
     if (!password) {
-      newErrors.password = "Password is required";
+      newErrors.password = "Senha é obrigatória";
     } else if (password.length < 8) {
-      newErrors.password = "Password must be at least 8 characters";
+      newErrors.password = "A senha deve ter pelo menos 8 caracteres";
     }
     
     setErrors(newErrors);
@@ -37,21 +48,24 @@ const Login: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (!validateForm()) return;
     
     setIsLoading(true);
     try {
       await login(email, password);
       toast({
-        title: "Login successful",
-        description: "You have been logged in successfully.",
+        title: "Login realizado com sucesso",
+        description: "Você foi autenticado com sucesso.",
       });
+      
+      // Redirect to previous page or dashboard
+      const from = location.state?.from?.pathname || "/dashboard";
+      navigate(from, { replace: true });
     } catch (error) {
-      console.error("Login error:", error);
+      console.error("Erro no login:", error);
       toast({
-        title: "Login failed",
-        description: "Invalid email or password.",
+        title: "Falha no login",
+        description: "Email ou senha inválidos.",
         variant: "destructive",
       });
     } finally {
@@ -62,8 +76,8 @@ const Login: React.FC = () => {
   return (
     <AuthLayout>
       <div className="text-center mb-6">
-        <h1 className="text-2xl font-bold" id="auth-title">Welcome back</h1>
-        <p className="text-muted-foreground mt-2">Sign in to your account</p>
+        <h1 className="text-2xl font-bold" id="auth-title">Bem-vindo de volta</h1>
+        <p className="text-muted-foreground mt-2">Entre na sua conta</p>
       </div>
       
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -79,7 +93,7 @@ const Login: React.FC = () => {
         
         <FormField
           id="password"
-          label="Password"
+          label="Senha"
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
@@ -89,13 +103,13 @@ const Login: React.FC = () => {
         
         <div className="text-right">
           <Link to="/forgot-password" className="text-sm text-primary hover:underline">
-            Forgot password?
+            Esqueceu a senha?
           </Link>
         </div>
         
         <FormActions
           primaryAction={{
-            label: "Sign In",
+            label: "Entrar",
             type: "submit",
             loading: isLoading,
           }}
@@ -104,7 +118,7 @@ const Login: React.FC = () => {
         
         <div className="mt-4 text-center">
           <Link to="/register" className="text-primary hover:underline">
-            Don't have an account? Sign up
+            Não tem uma conta? Cadastre-se
           </Link>
         </div>
       </form>

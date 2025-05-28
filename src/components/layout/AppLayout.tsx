@@ -1,9 +1,9 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { SidebarMenu } from "./SidebarMenu";
 import { Navbar } from "./Navbar";
 import { useAuth } from "@/contexts/AuthContext";
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -11,6 +11,16 @@ interface AppLayoutProps {
 
 export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   const { isAuthenticated, isLoading } = useAuth();
+  const location = useLocation();
+
+  // Log para debug
+  useEffect(() => {
+    console.log("AppLayout renderizado. Estado de autenticação:", { 
+      isAuthenticated, 
+      isLoading,
+      currentPath: location.pathname
+    });
+  }, [isAuthenticated, isLoading, location.pathname]);
 
   // If still loading, show loading spinner
   if (isLoading) {
@@ -23,7 +33,8 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
 
   // If not authenticated, redirect to login
   if (!isAuthenticated) {
-    return <Navigate to="/login" />;
+    console.log("Usuário não autenticado. Redirecionando para login...");
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   return (
