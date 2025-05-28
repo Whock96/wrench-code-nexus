@@ -10,17 +10,17 @@ interface AppLayoutProps {
 }
 
 export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { user, isLoading } = useAuth();
   const location = useLocation();
 
   // Log para debug
   useEffect(() => {
     console.log("AppLayout renderizado. Estado de autenticação:", { 
-      isAuthenticated, 
+      isAuthenticated: !!user, 
       isLoading,
       currentPath: location.pathname
     });
-  }, [isAuthenticated, isLoading, location.pathname]);
+  }, [user, isLoading, location.pathname]);
 
   // If still loading, show loading spinner
   if (isLoading) {
@@ -32,7 +32,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   }
 
   // If not authenticated, redirect to login
-  if (!isAuthenticated) {
+  if (!user) {
     console.log("Usuário não autenticado. Redirecionando para login...");
     return <Navigate to="/login" state={{ from: location }} replace />;
   }

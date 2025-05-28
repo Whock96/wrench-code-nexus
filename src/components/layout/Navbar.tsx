@@ -1,9 +1,17 @@
 
 import React from "react";
+import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export const Navbar: React.FC = () => {
   const { user, logout } = useAuth();
@@ -46,16 +54,18 @@ export const Navbar: React.FC = () => {
     <nav className="bg-card border-b border-border sticky top-0 z-10">
       <div className="px-4 md:px-6 py-3 flex items-center justify-between">
         <div className="flex items-center">
-          <span className="md:hidden text-xl font-semibold text-foreground">
-            ASMS
-          </span>
-          <span className="hidden md:block text-xl font-semibold text-foreground">
-            Auto Shop Management System
-          </span>
+          <Link to="/" className="flex items-center">
+            <span className="md:hidden text-xl font-semibold text-foreground">
+              ASMS
+            </span>
+            <span className="hidden md:block text-xl font-semibold text-foreground">
+              Auto Shop Management System
+            </span>
+          </Link>
         </div>
 
         <div className="flex items-center space-x-4">
-          {user && (
+          {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative rounded-full h-9 w-9 p-0">
@@ -87,6 +97,16 @@ export const Navbar: React.FC = () => {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+          ) : (
+            // Usuario não autenticado - mostrar botões de login/signup
+            <div className="flex items-center gap-2">
+              <Button variant="ghost" asChild>
+                <Link to="/login">Entrar</Link>
+              </Button>
+              <Button asChild>
+                <Link to="/register">Cadastrar</Link>
+              </Button>
+            </div>
           )}
         </div>
       </div>

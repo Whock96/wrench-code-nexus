@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { AppLayout } from "@/components/layout/AppLayout";
 
 // Import pages
 import Index from "./pages/Index";
@@ -31,6 +32,11 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
+// Component for protected routes
+const ProtectedRoute: React.FC<{ element: React.ReactNode }> = ({ element }) => {
+  return <AppLayout>{element}</AppLayout>;
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
@@ -49,33 +55,33 @@ const App = () => (
             <Route path="/forgot-password" element={<ForgotPassword />} />
             
             {/* Protected routes */}
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/reports" element={<ReportsDashboard />} />
+            <Route path="/dashboard" element={<ProtectedRoute element={<Dashboard />} />} />
+            <Route path="/reports" element={<ProtectedRoute element={<ReportsDashboard />} />} />
             
             {/* Clients */}
-            <Route path="/clients" element={<ClientList />} />
-            <Route path="/clients/new" element={<ClientForm />} />
-            <Route path="/clients/:id" element={<ClientDetail />} />
-            <Route path="/clients/:id/edit" element={<ClientForm />} />
+            <Route path="/clients" element={<ProtectedRoute element={<ClientList />} />} />
+            <Route path="/clients/new" element={<ProtectedRoute element={<ClientForm />} />} />
+            <Route path="/clients/:id" element={<ProtectedRoute element={<ClientDetail />} />} />
+            <Route path="/clients/:id/edit" element={<ProtectedRoute element={<ClientForm />} />} />
             
             {/* Vehicles */}
-            <Route path="/vehicles" element={<VehicleList />} />
-            <Route path="/vehicles/new" element={<VehicleForm />} />
-            <Route path="/vehicles/:id" element={<VehicleDetail />} />
-            <Route path="/vehicles/:id/edit" element={<VehicleForm />} />
+            <Route path="/vehicles" element={<ProtectedRoute element={<VehicleList />} />} />
+            <Route path="/vehicles/new" element={<ProtectedRoute element={<VehicleForm />} />} />
+            <Route path="/vehicles/:id" element={<ProtectedRoute element={<VehicleDetail />} />} />
+            <Route path="/vehicles/:id/edit" element={<ProtectedRoute element={<VehicleForm />} />} />
             
             {/* Service Orders */}
-            <Route path="/service-orders" element={<ServiceOrderList />} />
-            <Route path="/service-orders/new" element={<ServiceOrderForm />} />
-            <Route path="/service-orders/:id" element={<ServiceOrderDetail />} />
-            <Route path="/service-orders/:id/edit" element={<ServiceOrderForm />} />
+            <Route path="/service-orders" element={<ProtectedRoute element={<ServiceOrderList />} />} />
+            <Route path="/service-orders/new" element={<ProtectedRoute element={<ServiceOrderForm />} />} />
+            <Route path="/service-orders/:id" element={<ProtectedRoute element={<ServiceOrderDetail />} />} />
+            <Route path="/service-orders/:id/edit" element={<ProtectedRoute element={<ServiceOrderForm />} />} />
             
             {/* Notifications */}
-            <Route path="/notifications" element={<NotificationCenter />} />
-            <Route path="/settings/notifications" element={<NotificationPreferencesPage />} />
+            <Route path="/notifications" element={<ProtectedRoute element={<NotificationCenter />} />} />
+            <Route path="/settings/notifications" element={<ProtectedRoute element={<NotificationPreferencesPage />} />} />
             
             {/* Settings */}
-            <Route path="/settings/regional" element={<RegionalSettings />} />
+            <Route path="/settings/regional" element={<ProtectedRoute element={<RegionalSettings />} />} />
             
             {/* 404 */}
             <Route path="*" element={<NotFound />} />
