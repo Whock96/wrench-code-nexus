@@ -1,94 +1,110 @@
 
-import React from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Home, Users, Car, Wrench, Bell, Settings, BarChart3, Globe, TestTube } from "lucide-react";
+import { useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { 
-  LayoutDashboard, 
-  Users, 
-  Car, 
-  ClipboardList, 
-  Settings,
-  Building2,
-  BarChart
-} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useShop } from "@/hooks/useShop";
 
-const menuItems = [
-  {
-    title: "Dashboard",
-    href: "/dashboard",
-    icon: LayoutDashboard,
-  },
-  {
-    title: "Clientes",
-    href: "/clients",
-    icon: Users,
-  },
-  {
-    title: "Veículos",
-    href: "/vehicles",
-    icon: Car,
-  },
-  {
-    title: "Ordens de Serviço",
-    href: "/service-orders",
-    icon: ClipboardList,
-  },
-  {
-    title: "Relatórios",
-    href: "/reports",
-    icon: BarChart,
-  },
-  {
-    title: "Configurações",
-    href: "/settings",
-    icon: Settings,
-  },
-];
+interface SidebarMenuProps {
+  onNavigate: (path: string) => void;
+}
 
-export const SidebarMenu: React.FC = () => {
+interface NavItemProps {
+  href: string;
+  icon: React.ReactNode;
+  label: string;
+  onClick: () => void;
+  isActive?: boolean;
+}
+
+const NavItem = ({ href, icon, label, onClick, isActive }: NavItemProps) => (
+  <Button
+    variant={isActive ? "secondary" : "ghost"}
+    className={cn(
+      "w-full justify-start",
+      isActive && "bg-secondary"
+    )}
+    onClick={onClick}
+  >
+    {icon}
+    <span className="ml-2">{label}</span>
+  </Button>
+);
+
+export const SidebarMenu = ({ onNavigate }: SidebarMenuProps) => {
   const location = useLocation();
+  const { isAdmin } = useShop();
+
+  const menuItems = [
+    { href: "/dashboard", icon: <Home className="h-4 w-4" />, label: "Dashboard" },
+    { href: "/clients", icon: <Users className="h-4 w-4" />, label: "Clientes" },
+    { href: "/vehicles", icon: <Car className="h-4 w-4" />, label: "Veículos" },
+    { href: "/service-orders", icon: <Wrench className="h-4 w-4" />, label: "Ordens de Serviço" },
+    { href: "/notifications", icon: <Bell className="h-4 w-4" />, label: "Notificações" },
+    { href: "/reports", icon: <BarChart3 className="h-4 w-4" />, label: "Relatórios" },
+  ];
+
+  const settingsItems = [
+    { href: "/settings/notifications", icon: <Bell className="h-4 w-4" />, label: "Notificações" },
+    { href: "/settings/regional", icon: <Globe className="h-4 w-4" />, label: "Configurações Regionais" },
+  ];
+
+  const adminItems = [
+    { href: "/admin/test-accounts", icon: <TestTube className="h-4 w-4" />, label: "Contas de Teste" },
+  ];
 
   return (
-    <aside className="hidden md:flex h-screen w-64 flex-col fixed left-0 top-0 z-40 border-r border-border bg-card">
-      {/* Logo/Brand */}
-      <div className="flex h-16 items-center border-b border-border px-6">
-        <Building2 className="h-6 w-6 mr-2 text-primary" />
-        <span className="font-semibold text-lg">ASMS</span>
+    <div className="px-3 py-2">
+      <div className="space-y-1">
+        {menuItems.map((item) => (
+          <NavItem
+            key={item.href}
+            href={item.href}
+            icon={item.icon}
+            label={item.label}
+            onClick={() => onNavigate(item.href)}
+            isActive={location.pathname === item.href}
+          />
+        ))}
       </div>
-
-      {/* Navigation */}
-      <nav className="flex-1 space-y-2 p-4">
-        {menuItems.map((item) => {
-          const Icon = item.icon;
-          const isActive = location.pathname === item.href || 
-            (item.href !== "/dashboard" && location.pathname.startsWith(item.href));
-          
-          return (
-            <Link
+      
+      <div className="mt-6">
+        <h2 className="mb-2 px-4 text-lg font-semibold tracking-tight">
+          Configurações
+        </h2>
+        <div className="space-y-1">
+          {settingsItems.map((item) => (
+            <NavItem
               key={item.href}
-              to={item.href}
-              className={cn(
-                "flex items-center space-x-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                isActive
-                  ? "bg-primary text-primary-foreground"
-                  : "hover:bg-accent hover:text-accent-foreground"
-              )}
-            >
-              <Icon className="h-4 w-4" />
-              <span>{item.title}</span>
-            </Link>
-          );
-        })}
-      </nav>
-
-      {/* Footer */}
-      <div className="p-4 border-t border-border">
-        <div className="text-xs text-muted-foreground">
-          Auto Shop Management System
+              href={item.href}
+              icon={item.icon}
+              label={item.label}
+              onClick={() => onNavigate(item.href)}
+              isActive={location.pathname === item.href}
+            />
+          ))}
         </div>
       </div>
-    </aside>
+
+      {isAdmin && (
+        <div className="mt-6">
+          <h2 className="mb-2 px-4 text-lg font-semibold tracking-tight">
+            Administração
+          </h2>
+          <div className="space-y-1">
+            {adminItems.map((item) => (
+              <NavItem
+                key={item.href}
+                href={item.href}
+                icon={item.icon}
+                label={item.label}
+                onClick={() => onNavigate(item.href)}
+                isActive={location.pathname === item.href}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
   );
 };
-
-export default SidebarMenu;

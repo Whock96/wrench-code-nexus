@@ -9,6 +9,45 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      countries: {
+        Row: {
+          active: boolean | null
+          code: string
+          currency_code: string | null
+          date_format: string | null
+          name: string
+          phone_code: string | null
+          tax_id_label: string | null
+          tax_id_mask: string | null
+          vehicle_registration_label: string | null
+          vehicle_registration_mask: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          code: string
+          currency_code?: string | null
+          date_format?: string | null
+          name: string
+          phone_code?: string | null
+          tax_id_label?: string | null
+          tax_id_mask?: string | null
+          vehicle_registration_label?: string | null
+          vehicle_registration_mask?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          code?: string
+          currency_code?: string | null
+          date_format?: string | null
+          name?: string
+          phone_code?: string | null
+          tax_id_label?: string | null
+          tax_id_mask?: string | null
+          vehicle_registration_label?: string | null
+          vehicle_registration_mask?: string | null
+        }
+        Relationships: []
+      }
       customer_contacts: {
         Row: {
           contact_type: string
@@ -48,40 +87,49 @@ export type Database = {
         Row: {
           address: Json | null
           birth_date: string | null
-          cpf_cnpj: string | null
+          country_code: string | null
           created_at: string | null
           email: string | null
           id: string
+          locale: string | null
           name: string
           notes: string | null
           phone: string | null
           shop_id: string | null
+          tax_id: string | null
+          tax_id_type: string | null
           updated_at: string | null
         }
         Insert: {
           address?: Json | null
           birth_date?: string | null
-          cpf_cnpj?: string | null
+          country_code?: string | null
           created_at?: string | null
           email?: string | null
           id?: string
+          locale?: string | null
           name: string
           notes?: string | null
           phone?: string | null
           shop_id?: string | null
+          tax_id?: string | null
+          tax_id_type?: string | null
           updated_at?: string | null
         }
         Update: {
           address?: Json | null
           birth_date?: string | null
-          cpf_cnpj?: string | null
+          country_code?: string | null
           created_at?: string | null
           email?: string | null
           id?: string
+          locale?: string | null
           name?: string
           notes?: string | null
           phone?: string | null
           shop_id?: string | null
+          tax_id?: string | null
+          tax_id_type?: string | null
           updated_at?: string | null
         }
         Relationships: [
@@ -471,6 +519,57 @@ export type Database = {
           },
         ]
       }
+      shop_regional_settings: {
+        Row: {
+          created_at: string | null
+          date_format: string | null
+          default_country_code: string | null
+          default_currency: string | null
+          default_language: string | null
+          measurement_system: string | null
+          shop_id: string
+          time_format: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          date_format?: string | null
+          default_country_code?: string | null
+          default_currency?: string | null
+          default_language?: string | null
+          measurement_system?: string | null
+          shop_id: string
+          time_format?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          date_format?: string | null
+          default_country_code?: string | null
+          default_currency?: string | null
+          default_language?: string | null
+          measurement_system?: string | null
+          shop_id?: string
+          time_format?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shop_regional_settings_default_country_code_fkey"
+            columns: ["default_country_code"]
+            isOneToOne: false
+            referencedRelation: "countries"
+            referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "shop_regional_settings_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: true
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       shop_users: {
         Row: {
           joined_at: string | null
@@ -717,6 +816,7 @@ export type Database = {
       vehicles: {
         Row: {
           color: string | null
+          country_code: string | null
           created_at: string | null
           customer_id: string | null
           engine_type: string | null
@@ -728,6 +828,7 @@ export type Database = {
           mileage: number | null
           model: string
           notes: string | null
+          registration_type: string | null
           shop_id: string | null
           updated_at: string | null
           vin: string | null
@@ -735,6 +836,7 @@ export type Database = {
         }
         Insert: {
           color?: string | null
+          country_code?: string | null
           created_at?: string | null
           customer_id?: string | null
           engine_type?: string | null
@@ -746,6 +848,7 @@ export type Database = {
           mileage?: number | null
           model: string
           notes?: string | null
+          registration_type?: string | null
           shop_id?: string | null
           updated_at?: string | null
           vin?: string | null
@@ -753,6 +856,7 @@ export type Database = {
         }
         Update: {
           color?: string | null
+          country_code?: string | null
           created_at?: string | null
           customer_id?: string | null
           engine_type?: string | null
@@ -764,6 +868,7 @@ export type Database = {
           mileage?: number | null
           model?: string
           notes?: string | null
+          registration_type?: string | null
           shop_id?: string | null
           updated_at?: string | null
           vin?: string | null

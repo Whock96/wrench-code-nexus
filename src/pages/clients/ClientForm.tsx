@@ -1,28 +1,36 @@
 
-import React, { useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import AppLayout from "@/components/layout/AppLayout";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Save } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/components/ui/use-toast";
-import { useAuth } from "@/contexts/AuthContext";
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import AppLayout from '@/components/layout/AppLayout';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { useCountries } from '@/hooks/useCountries';
+import { useShop } from '@/hooks/useShop';
 
 const ClientForm: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams();
-  const { user } = useAuth();
-  const isEditing = !!id;
+  const { toast } = useToast();
+  const { shopId } = useShop();
+  const { countries, isLoading: isLoadingCountries, getDocumentLabel } = useCountries();
+  const isEditing = Boolean(id);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     phone: "",
-    cpf_cnpj: "",
+    tax_id: "",
+    tax_id_type: "CPF/CNPJ",
+    country_code: "BR",
+    locale: "pt-BR",
     birth_date: "",
     address: {
       street: "",
@@ -30,108 +38,53 @@ const ClientForm: React.FC = () => {
       city: "",
       state: "",
       zip_code: "",
+      country: "Brasil",
     },
     notes: "",
   });
-  const [isLoading, setIsLoading] = useState(false);
-  const [isLoadingData, setIsLoadingData] = useState(isEditing);
 
   useEffect(() => {
-    if (isEditing) {
-      loadCustomer();
+    if (isEditing && id) {
+      loadClient();
     }
   }, [id, isEditing]);
 
-  const loadCustomer = async () => {
+  const loadClient = async () => {
     try {
+      setIsLoading(true);
       const { data, error } = await supabase
-        .from("customers")
-        .select("*")
-        .eq("id", id)
+        .from('customers')
+        .select('*')
+        .eq('id', id)
         .single();
 
       if (error) throw error;
 
-      if (data) {
-        setFormData({
-          name: data.name || "",
-          email: data.email || "",
-          phone: data.phone || "",
-          cpf_cnpj: data.cpf_cnpj || "",
-          birth_date: data.birth_date || "",
-          address: typeof data.address === 'object' ? data.address as any : {
-            street: "",
-            number: "",
-            city: "",
-            state: "",
-            zip_code: "",
-          },
-          notes: data.notes || "",
-        });
-      }
-    } catch (error: any) {
-      console.error("Error loading customer:", error);
-      toast({
-        title: "Erro ao carregar cliente",
-        description: error.message,
-        variant: "destructive",
+      setFormData({
+        name: data.name,
+        email: data.email || "",
+        phone: data.phone || "",
+        tax_id: data.tax_id || "",
+        tax_id_type: data.tax_id_type || "CPF/CNPJ",
+        country_code: data.country_code || "BR",
+        locale: data.locale || "pt-BR",
+        birth_date: data.birth_date || "",
+        address: data.address || {
+          street: "",
+          number: "",
+          city: "",
+          state: "",
+          zip_code: "",
+          country: "Brasil",
+        },
+        notes: data.notes || "",
       });
-    } finally {
-      setIsLoadingData(false);
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-
-    try {
-      // For now, we'll use a mock shop_id. In a real app, this would come from the user's context
-      const mockShopId = "00000000-0000-0000-0000-000000000001";
-
-      const customerData = {
-        name: formData.name,
-        email: formData.email || null,
-        phone: formData.phone || null,
-        cpf_cnpj: formData.cpf_cnpj || null,
-        birth_date: formData.birth_date || null,
-        address: formData.address,
-        notes: formData.notes || null,
-        shop_id: mockShopId,
-      };
-
-      if (isEditing) {
-        const { error } = await supabase
-          .from("customers")
-          .update(customerData)
-          .eq("id", id);
-
-        if (error) throw error;
-
-        toast({
-          title: "Cliente atualizado!",
-          description: "Os dados do cliente foram atualizados com sucesso.",
-        });
-      } else {
-        const { error } = await supabase
-          .from("customers")
-          .insert([customerData]);
-
-        if (error) throw error;
-
-        toast({
-          title: "Cliente cadastrado!",
-          description: "O novo cliente foi cadastrado com sucesso.",
-        });
-      }
-
-      navigate("/clients");
     } catch (error: any) {
-      console.error("Error saving customer:", error);
+      console.error('Error loading client:', error);
       toast({
-        title: isEditing ? "Erro ao atualizar cliente" : "Erro ao cadastrar cliente",
+        title: 'Erro ao carregar cliente',
         description: error.message,
-        variant: "destructive",
+        variant: 'destructive',
       });
     } finally {
       setIsLoading(false);
@@ -139,8 +92,8 @@ const ClientForm: React.FC = () => {
   };
 
   const handleInputChange = (field: string, value: string) => {
-    if (field.startsWith("address.")) {
-      const addressField = field.split(".")[1];
+    if (field.startsWith('address.')) {
+      const addressField = field.split('.')[1];
       setFormData(prev => ({
         ...prev,
         address: {
@@ -156,7 +109,58 @@ const ClientForm: React.FC = () => {
     }
   };
 
-  if (isLoadingData) {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!shopId) return;
+
+    try {
+      setIsSaving(true);
+
+      const clientData = {
+        ...formData,
+        shop_id: shopId,
+        updated_at: new Date().toISOString(),
+      };
+
+      if (isEditing) {
+        const { error } = await supabase
+          .from('customers')
+          .update(clientData)
+          .eq('id', id);
+
+        if (error) throw error;
+
+        toast({
+          title: 'Cliente atualizado',
+          description: 'As informações do cliente foram atualizadas com sucesso.',
+        });
+      } else {
+        const { error } = await supabase
+          .from('customers')
+          .insert(clientData);
+
+        if (error) throw error;
+
+        toast({
+          title: 'Cliente criado',
+          description: 'O cliente foi criado com sucesso.',
+        });
+      }
+
+      navigate('/clients');
+    } catch (error: any) {
+      console.error('Error saving client:', error);
+      toast({
+        title: 'Erro ao salvar cliente',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  if (isLoading || isLoadingCountries) {
     return (
       <AppLayout>
         <div className="flex items-center justify-center h-64">
@@ -168,160 +172,180 @@ const ClientForm: React.FC = () => {
 
   return (
     <AppLayout>
-      <div className="space-y-6">
-        <div className="flex items-center space-x-4">
-          <Button variant="ghost" onClick={() => navigate("/clients")}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Voltar
-          </Button>
-          <div>
-            <h1 className="text-3xl font-bold">
-              {isEditing ? "Editar Cliente" : "Novo Cliente"}
-            </h1>
-            <p className="text-muted-foreground">
-              {isEditing ? "Atualize os dados do cliente" : "Cadastre um novo cliente"}
-            </p>
-          </div>
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold">
+            {isEditing ? 'Editar Cliente' : 'Novo Cliente'}
+          </h1>
+          <p className="text-muted-foreground">
+            {isEditing ? 'Atualize as informações do cliente' : 'Cadastre um novo cliente'}
+          </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Basic Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Informações Básicas</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Nome Completo *</Label>
-                  <Input
-                    id="name"
-                    value={formData.name}
-                    onChange={(e) => handleInputChange("name", e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => handleInputChange("email", e.target.value)}
-                  />
-                </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>Informações Pessoais</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="name">Nome *</Label>
+                <Input
+                  id="name"
+                  value={formData.name}
+                  onChange={(e) => handleInputChange("name", e.target.value)}
+                  required
+                />
               </div>
-              <div className="grid gap-4 md:grid-cols-3">
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Telefone</Label>
-                  <Input
-                    id="phone"
-                    value={formData.phone}
-                    onChange={(e) => handleInputChange("phone", e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="cpf_cnpj">CPF/CNPJ</Label>
-                  <Input
-                    id="cpf_cnpj"
-                    value={formData.cpf_cnpj}
-                    onChange={(e) => handleInputChange("cpf_cnpj", e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="birth_date">Data de Nascimento</Label>
-                  <Input
-                    id="birth_date"
-                    type="date"
-                    value={formData.birth_date}
-                    onChange={(e) => handleInputChange("birth_date", e.target.value)}
-                  />
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="birth_date">Data de Nascimento</Label>
+                <Input
+                  id="birth_date"
+                  type="date"
+                  value={formData.birth_date}
+                  onChange={(e) => handleInputChange("birth_date", e.target.value)}
+                />
               </div>
-            </CardContent>
-          </Card>
+            </div>
 
-          {/* Address */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Endereço</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid gap-4 md:grid-cols-3">
-                <div className="space-y-2 md:col-span-2">
-                  <Label htmlFor="street">Rua</Label>
-                  <Input
-                    id="street"
-                    value={formData.address.street}
-                    onChange={(e) => handleInputChange("address.street", e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="number">Número</Label>
-                  <Input
-                    id="number"
-                    value={formData.address.number}
-                    onChange={(e) => handleInputChange("address.number", e.target.value)}
-                  />
-                </div>
+            <div className="grid gap-4 md:grid-cols-3">
+              <div className="space-y-2">
+                <Label htmlFor="country_code">País</Label>
+                <Select 
+                  value={formData.country_code} 
+                  onValueChange={(value) => handleInputChange("country_code", value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o país" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {countries.map((country) => (
+                      <SelectItem key={country.code} value={country.code}>
+                        {country.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-              <div className="grid gap-4 md:grid-cols-3">
-                <div className="space-y-2">
-                  <Label htmlFor="city">Cidade</Label>
-                  <Input
-                    id="city"
-                    value={formData.address.city}
-                    onChange={(e) => handleInputChange("address.city", e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="state">Estado</Label>
-                  <Input
-                    id="state"
-                    value={formData.address.state}
-                    onChange={(e) => handleInputChange("address.state", e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="zip_code">CEP</Label>
-                  <Input
-                    id="zip_code"
-                    value={formData.address.zip_code}
-                    onChange={(e) => handleInputChange("address.zip_code", e.target.value)}
-                  />
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="tax_id_type">Tipo de Documento</Label>
+                <Input 
+                  id="tax_id_type" 
+                  value={formData.tax_id_type}
+                  onChange={(e) => handleInputChange("tax_id_type", e.target.value)}
+                />
               </div>
-            </CardContent>
-          </Card>
+              <div className="space-y-2">
+                <Label htmlFor="tax_id">{getDocumentLabel(formData.country_code)}</Label>
+                <Input 
+                  id="tax_id" 
+                  value={formData.tax_id}
+                  onChange={(e) => handleInputChange("tax_id", e.target.value)}
+                />
+              </div>
+            </div>
 
-          {/* Notes */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Observações</CardTitle>
-            </CardHeader>
-            <CardContent>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => handleInputChange("email", e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="phone">Telefone</Label>
+                <Input
+                  id="phone"
+                  value={formData.phone}
+                  onChange={(e) => handleInputChange("phone", e.target.value)}
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Endereço</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid gap-4 md:grid-cols-3">
+              <div className="space-y-2">
+                <Label htmlFor="street">Rua</Label>
+                <Input
+                  id="street"
+                  value={formData.address.street}
+                  onChange={(e) => handleInputChange("address.street", e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="number">Número</Label>
+                <Input
+                  id="number"
+                  value={formData.address.number}
+                  onChange={(e) => handleInputChange("address.number", e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="zip_code">CEP</Label>
+                <Input
+                  id="zip_code"
+                  value={formData.address.zip_code}
+                  onChange={(e) => handleInputChange("address.zip_code", e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="city">Cidade</Label>
+                <Input
+                  id="city"
+                  value={formData.address.city}
+                  onChange={(e) => handleInputChange("address.city", e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="state">Estado</Label>
+                <Input
+                  id="state"
+                  value={formData.address.state}
+                  onChange={(e) => handleInputChange("address.state", e.target.value)}
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Observações</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              <Label htmlFor="notes">Notas adicionais</Label>
               <Textarea
-                placeholder="Observações adicionais sobre o cliente..."
+                id="notes"
                 value={formData.notes}
                 onChange={(e) => handleInputChange("notes", e.target.value)}
-                rows={4}
+                placeholder="Observações sobre o cliente..."
               />
-            </CardContent>
-          </Card>
+            </div>
+          </CardContent>
+        </Card>
 
-          {/* Submit */}
-          <div className="flex justify-end space-x-4">
-            <Button type="button" variant="outline" onClick={() => navigate("/clients")}>
-              Cancelar
-            </Button>
-            <Button type="submit" disabled={isLoading}>
-              {isLoading && <div className="h-4 w-4 animate-spin rounded-full border-2 border-background border-t-transparent mr-2" />}
-              <Save className="h-4 w-4 mr-2" />
-              {isEditing ? "Salvar Alterações" : "Cadastrar Cliente"}
-            </Button>
-          </div>
-        </form>
-      </div>
+        <div className="flex justify-end space-x-4">
+          <Button type="button" variant="outline" onClick={() => navigate('/clients')}>
+            Cancelar
+          </Button>
+          <Button type="submit" disabled={isSaving}>
+            {isSaving ? 'Salvando...' : isEditing ? 'Atualizar Cliente' : 'Criar Cliente'}
+          </Button>
+        </div>
+      </form>
     </AppLayout>
   );
 };
