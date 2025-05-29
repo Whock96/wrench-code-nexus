@@ -459,7 +459,10 @@ export type Database = {
           description: string | null
           estimated_completion_date: string | null
           id: string
+          last_status_update: string | null
           order_number: number
+          public_access_enabled: boolean | null
+          qr_code_token: string | null
           shop_id: string
           status: string
           technician_notes: string | null
@@ -473,7 +476,10 @@ export type Database = {
           description?: string | null
           estimated_completion_date?: string | null
           id?: string
+          last_status_update?: string | null
           order_number?: number
+          public_access_enabled?: boolean | null
+          qr_code_token?: string | null
           shop_id: string
           status?: string
           technician_notes?: string | null
@@ -487,7 +493,10 @@ export type Database = {
           description?: string | null
           estimated_completion_date?: string | null
           id?: string
+          last_status_update?: string | null
           order_number?: number
+          public_access_enabled?: boolean | null
+          qr_code_token?: string | null
           shop_id?: string
           status?: string
           technician_notes?: string | null
