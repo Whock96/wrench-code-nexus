@@ -27,6 +27,9 @@ export interface ServiceOrderWithRelations {
   total_amount: number;
   created_at: string;
   updated_at: string | null;
+  qr_code_token?: string | null;
+  public_access_enabled?: boolean | null;
+  last_status_update?: string | null;
   customers?: {
     id: string;
     name: string;
@@ -56,13 +59,22 @@ export interface ServiceItem {
 }
 
 // Tipos para histórico de status
+export interface StatusHistoryItem {
+  id: string;
+  service_order_id: string;
+  status: string;
+  change_reason?: string | null;
+  created_at: string;
+  created_by?: string | null;
+}
+
 export interface ServiceOrderStatusHistory {
   id: string;
   service_order_id: string;
   status: string;
-  change_reason?: string;
-  changed_at: string;
-  changed_by?: string;
+  change_reason?: string | null;
+  created_at: string;
+  created_by?: string | null;
 }
 
 // Tipos para dashboard

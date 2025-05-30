@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import QRCode from 'qrcode.react';
+import { QRCodeSVG } from 'qrcode.react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
@@ -57,35 +57,47 @@ export const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
   };
 
   const handleDownloadQRCode = () => {
-    const canvas = document.getElementById('service-order-qrcode') as HTMLCanvasElement;
-    if (canvas) {
-      const url = canvas.toDataURL('image/png');
-      const link = document.createElement('a');
-      link.download = `ordem-servico-qrcode-${serviceOrderId}.png`;
-      link.href = url;
-      link.click();
+    const svg = document.getElementById('service-order-qrcode') as SVGElement;
+    if (svg) {
+      const svgData = new XMLSerializer().serializeToString(svg);
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const img = new Image();
+      
+      img.onload = () => {
+        canvas.width = img.width;
+        canvas.height = img.height;
+        ctx?.drawImage(img, 0, 0);
+        const url = canvas.toDataURL('image/png');
+        const link = document.createElement('a');
+        link.download = `ordem-servico-qrcode-${serviceOrderId}.png`;
+        link.href = url;
+        link.click();
+      };
+      
+      img.src = 'data:image/svg+xml;base64,' + btoa(svgData);
     }
   };
 
   const handlePrint = () => {
     const printWindow = window.open('', '_blank');
     if (printWindow) {
-      const canvas = document.getElementById('service-order-qrcode') as HTMLCanvasElement;
-      if (canvas) {
-        const url = canvas.toDataURL('image/png');
+      const svg = document.getElementById('service-order-qrcode') as SVGElement;
+      if (svg) {
+        const svgData = new XMLSerializer().serializeToString(svg);
         printWindow.document.write(`
           <html>
             <head>
               <title>QR Code - Ordem de Serviço</title>
               <style>
                 body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
-                img { max-width: 300px; margin: 20px auto; }
+                svg { max-width: 300px; margin: 20px auto; }
                 p { margin: 5px 0; }
               </style>
             </head>
             <body>
               <h2>QR Code - Ordem de Serviço</h2>
-              <img src="${url}" alt="QR Code" />
+              ${svgData}
               <p>Escaneie para acompanhar o status da sua ordem de serviço</p>
               <p style="font-size: 12px; color: #666;">${publicUrl}</p>
             </body>
@@ -131,13 +143,12 @@ export const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
           {publicAccessEnabled ? (
             <div className="flex flex-col items-center space-y-4">
               <div className="bg-white p-4 rounded-lg">
-                <QRCode
+                <QRCodeSVG
                   id="service-order-qrcode"
                   value={publicUrl}
                   size={200}
                   level="H"
                   includeMargin
-                  renderAs="canvas"
                 />
               </div>
               

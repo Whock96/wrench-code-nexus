@@ -1,5 +1,5 @@
 
-import React, { useEffect } from "react";
+import React from "react";
 import { SidebarMenu } from "./SidebarMenu";
 import { Navbar } from "./Navbar";
 import { useAuth } from "@/contexts/AuthContext";
@@ -13,16 +13,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   const { user, isLoading } = useAuth();
   const location = useLocation();
 
-  // Log para debug
-  useEffect(() => {
-    console.log("AppLayout renderizado. Estado de autenticação:", { 
-      isAuthenticated: !!user, 
-      isLoading,
-      currentPath: location.pathname
-    });
-  }, [user, isLoading, location.pathname]);
-
-  // If still loading, show loading spinner
+  // Se ainda estiver carregando, mostrar spinner
   if (isLoading) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
@@ -31,12 +22,12 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     );
   }
 
-  // If not authenticated, redirect to login
+  // Se não estiver autenticado, redirecionar para login
   if (!user) {
-    console.log("Usuário não autenticado. Redirecionando para login...");
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
+  // Renderizar layout para usuário autenticado
   return (
     <div className="min-h-screen flex w-full bg-background text-foreground">
       <SidebarMenu />

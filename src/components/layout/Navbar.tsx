@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 export const Navbar: React.FC = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, isAuthenticated } = useAuth();
 
   const handleLogout = async () => {
     try {
@@ -24,11 +24,11 @@ export const Navbar: React.FC = () => {
     }
   };
 
-  const getInitials = (firstName: string, lastName: string): string => {
+  const getInitials = (firstName: string = "", lastName: string = ""): string => {
     return `${firstName?.[0] || ""}${lastName?.[0] || ""}`.toUpperCase();
   };
 
-  const getUserInitials = () => {
+  const getUserInitials = (): string => {
     if (!user) return "U";
     
     if (user.firstName && user.lastName) {
@@ -44,10 +44,13 @@ export const Navbar: React.FC = () => {
     return user.email?.charAt(0).toUpperCase() || "U";
   };
 
-  const getUserDisplayName = () => {
-    if (user?.full_name) return user.full_name;
-    if (user?.firstName && user?.lastName) return `${user.firstName} ${user.lastName}`;
-    return user?.email || "Usuário";
+  const getUserDisplayName = (): string => {
+    if (!user) return "Usuário";
+    
+    if (user.full_name) return user.full_name;
+    if (user.firstName && user.lastName) return `${user.firstName} ${user.lastName}`;
+    
+    return user.email || "Usuário";
   };
 
   return (
@@ -65,12 +68,12 @@ export const Navbar: React.FC = () => {
         </div>
 
         <div className="flex items-center space-x-4">
-          {user ? (
+          {isAuthenticated ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative rounded-full h-9 w-9 p-0">
                   <Avatar className="h-9 w-9">
-                    <AvatarImage src={user.profileImage} alt={getUserDisplayName()} />
+                    <AvatarImage src={user?.profileImage} alt={getUserDisplayName()} />
                     <AvatarFallback className="bg-primary text-primary-foreground">
                       {getUserInitials()}
                     </AvatarFallback>
@@ -81,15 +84,12 @@ export const Navbar: React.FC = () => {
                 <DropdownMenuLabel>
                   <div className="flex flex-col space-y-1">
                     <p className="text-sm font-medium leading-none">{getUserDisplayName()}</p>
-                    <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
+                    <p className="text-xs leading-none text-muted-foreground">{user?.email}</p>
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>
-                  <span>Profile</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <span>Settings</span>
+                <DropdownMenuItem asChild>
+                  <Link to="/settings/regional">Configurações</Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleLogout}>
@@ -98,7 +98,6 @@ export const Navbar: React.FC = () => {
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            // Usuario não autenticado - mostrar botões de login/signup
             <div className="flex items-center gap-2">
               <Button variant="ghost" asChild>
                 <Link to="/login">Entrar</Link>

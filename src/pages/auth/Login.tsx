@@ -8,7 +8,7 @@ import { FormActions } from "@/components/forms/FormActions";
 import { useToast } from "@/hooks/use-toast";
 
 const Login: React.FC = () => {
-  const { login, user } = useAuth();
+  const { login, user, isLoading: authLoading } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
@@ -38,8 +38,6 @@ const Login: React.FC = () => {
     
     if (!password) {
       newErrors.password = "Senha é obrigatória";
-    } else if (password.length < 8) {
-      newErrors.password = "A senha deve ter pelo menos 8 caracteres";
     }
     
     setErrors(newErrors);
@@ -48,20 +46,17 @@ const Login: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
     if (!validateForm()) return;
     
     setIsLoading(true);
     try {
       await login(email, password);
-      toast({
-        title: "Login realizado com sucesso",
-        description: "Você foi autenticado com sucesso.",
-      });
       
       // Redirect to previous page or dashboard
       const from = location.state?.from?.pathname || "/dashboard";
       navigate(from, { replace: true });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erro no login:", error);
       toast({
         title: "Falha no login",
@@ -109,9 +104,9 @@ const Login: React.FC = () => {
         
         <FormActions
           primaryAction={{
-            label: "Entrar",
+            label: isLoading || authLoading ? "Entrando..." : "Entrar",
             type: "submit",
-            loading: isLoading,
+            loading: isLoading || authLoading,
           }}
           align="center"
         />
