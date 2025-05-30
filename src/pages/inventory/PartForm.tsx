@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
@@ -14,6 +13,7 @@ import { ArrowLeft, Save } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { PartFormData, PartCategory } from '@/types/inventory-types';
+import { useAuth } from '@/contexts/AuthContext';
 
 const partFormSchema = z.object({
   sku: z.string().min(1, 'SKU é obrigatório'),
@@ -36,6 +36,8 @@ const PartForm: React.FC = () => {
   const isEdit = Boolean(id);
   const [categories, setCategories] = useState<PartCategory[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [shopId, setShopId] = useState<string | null>(null);
+  const { user } = useAuth();
 
   const form = useForm<PartFormData>({
     resolver: zodResolver(partFormSchema),
@@ -56,11 +58,29 @@ const PartForm: React.FC = () => {
   });
 
   useEffect(() => {
+    const getShopId = async () => {
+      if (!user) return;
+      
+      const { data, error } = await supabase
+        .from('shop_users')
+        .select('shop_id')
+        .eq('user_id', user.id)
+        .single();
+      
+      if (error) {
+        console.error('Error getting shop ID:', error);
+        return;
+      }
+      
+      setShopId(data.shop_id);
+    };
+
+    getShopId();
     loadCategories();
     if (isEdit && id) {
       loadPart(id);
     }
-  }, [id, isEdit]);
+  }, [id, isEdit, user]);
 
   const loadCategories = async () => {
     try {
@@ -116,13 +136,28 @@ const PartForm: React.FC = () => {
   };
 
   const onSubmit = async (data: PartFormData) => {
+    if (!shopId) {
+      toast({
+        title: 'Erro',
+        description: 'Não foi possível identificar a oficina',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     try {
       setIsLoading(true);
+
+      // Add shop_id to the data
+      const partData = {
+        ...data,
+        shop_id: shopId,
+      };
 
       if (isEdit && id) {
         const { error } = await supabase
           .from('parts')
-          .update(data)
+          .update(partData)
           .eq('id', id);
 
         if (error) throw error;
@@ -134,7 +169,7 @@ const PartForm: React.FC = () => {
       } else {
         const { error } = await supabase
           .from('parts')
-          .insert([data]);
+          .insert([partData]);
 
         if (error) throw error;
 

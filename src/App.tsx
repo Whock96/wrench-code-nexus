@@ -28,9 +28,12 @@ import ServiceOrderList from "@/pages/service-orders/ServiceOrderList";
 import ServiceOrderDetail from "@/pages/service-orders/ServiceOrderDetail";
 import ServiceOrderForm from "@/pages/service-orders/ServiceOrderForm";
 
-// Estoque
+// Estoque - imports corretos
 import InventoryDashboard from "@/pages/inventory/InventoryDashboard";
 import PartsList from "@/pages/inventory/PartsList";
+import PartForm from "@/pages/inventory/PartForm";
+import PartDetail from "@/pages/inventory/PartDetail";
+import StockMovements from "@/pages/inventory/StockMovements";
 
 // Relatórios
 import ReportsDashboard from "@/pages/reports/ReportsDashboard";

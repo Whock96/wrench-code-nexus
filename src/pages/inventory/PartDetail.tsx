@@ -65,7 +65,23 @@ const PartDetail: React.FC = () => {
         .limit(20);
 
       if (error) throw error;
-      setStockMovements(data || []);
+      // Cast the data to match our StockMovement interface
+      const movements: StockMovement[] = (data || []).map((item: any) => ({
+        id: item.id,
+        part_id: item.part_id,
+        movement_type: item.movement_type as 'entry' | 'exit' | 'adjustment' | 'return',
+        quantity: item.quantity,
+        previous_stock: item.previous_stock,
+        new_stock: item.new_stock,
+        unit_price: item.unit_price,
+        total_price: item.total_price,
+        reference_type: item.reference_type,
+        reference_id: item.reference_id,
+        notes: item.notes,
+        created_by: item.created_by,
+        created_at: item.created_at,
+      }));
+      setStockMovements(movements);
     } catch (error: any) {
       console.error('Error loading stock movements:', error);
     }

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,6 +17,7 @@ import { toast } from '@/hooks/use-toast';
 import { StockMovement, Part, StockMovementFormData } from '@/types/inventory-types';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { useAuth } from '@/contexts/AuthContext';
 
 const movementFormSchema = z.object({
   part_id: z.string().min(1, 'Peça é obrigatória'),
@@ -27,13 +27,27 @@ const movementFormSchema = z.object({
   notes: z.string().optional(),
 });
 
+interface PartWithStock {
+  id: string;
+  name: string;
+  sku: string;
+  current_stock: number;
+  shop_id: string;
+  cost_price: number;
+  selling_price: number;
+  minimum_stock: number;
+  created_at: string;
+}
+
 const StockMovements: React.FC = () => {
   const [movements, setMovements] = useState<StockMovement[]>([]);
-  const [parts, setParts] = useState<Part[]>([]);
+  const [parts, setParts] = useState<PartWithStock[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<string>('');
+  const [shopId, setShopId] = useState<string | null>(null);
+  const { user } = useAuth();
 
   const form = useForm<StockMovementFormData>({
     resolver: zodResolver(movementFormSchema),
@@ -47,11 +61,36 @@ const StockMovements: React.FC = () => {
   });
 
   useEffect(() => {
-    loadMovements();
-    loadParts();
-  }, []);
+    const getShopId = async () => {
+      if (!user) return;
+      
+      const { data, error } = await supabase
+        .from('shop_users')
+        .select('shop_id')
+        .eq('user_id', user.id)
+        .single();
+      
+      if (error) {
+        console.error('Error getting shop ID:', error);
+        return;
+      }
+      
+      setShopId(data.shop_id);
+    };
+
+    getShopId();
+  }, [user]);
+
+  useEffect(() => {
+    if (shopId) {
+      loadMovements();
+      loadParts();
+    }
+  }, [shopId]);
 
   const loadMovements = async () => {
+    if (!shopId) return;
+    
     try {
       setIsLoading(true);
       const { data, error } = await supabase
@@ -67,7 +106,25 @@ const StockMovements: React.FC = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setMovements(data || []);
+      
+      // Cast the data to match our interfaces
+      const formattedMovements: StockMovement[] = (data || []).map((item: any) => ({
+        id: item.id,
+        part_id: item.part_id,
+        movement_type: item.movement_type as 'entry' | 'exit' | 'adjustment' | 'return',
+        quantity: item.quantity,
+        previous_stock: item.previous_stock,
+        new_stock: item.new_stock,
+        unit_price: item.unit_price,
+        total_price: item.total_price,
+        reference_type: item.reference_type,
+        reference_id: item.reference_id,
+        notes: item.notes,
+        created_by: item.created_by,
+        created_at: item.created_at,
+      }));
+      
+      setMovements(formattedMovements);
     } catch (error: any) {
       console.error('Error loading movements:', error);
       toast({
@@ -81,29 +138,50 @@ const StockMovements: React.FC = () => {
   };
 
   const loadParts = async () => {
+    if (!shopId) return;
+    
     try {
       const { data, error } = await supabase
         .from('parts')
-        .select('id, name, sku, current_stock')
+        .select('id, name, sku, current_stock, shop_id, cost_price, selling_price, minimum_stock, created_at')
+        .eq('shop_id', shopId)
         .order('name');
 
       if (error) throw error;
-      setParts(data || []);
+      
+      // Cast the data to match our interface
+      const formattedParts: PartWithStock[] = (data || []).map((item: any) => ({
+        id: item.id,
+        name: item.name,
+        sku: item.sku,
+        current_stock: item.current_stock,
+        shop_id: item.shop_id,
+        cost_price: item.cost_price,
+        selling_price: item.selling_price,
+        minimum_stock: item.minimum_stock,
+        created_at: item.created_at,
+      }));
+      
+      setParts(formattedParts);
     } catch (error: any) {
       console.error('Error loading parts:', error);
     }
   };
 
   const onSubmit = async (data: StockMovementFormData) => {
+    if (!shopId) return;
+    
     try {
       // Buscar o estoque atual da peça
-      const { data: part, error: partError } = await supabase
-        .from('parts')
-        .select('current_stock')
-        .eq('id', data.part_id)
-        .single();
-
-      if (partError) throw partError;
+      const part = parts.find(p => p.id === data.part_id);
+      if (!part) {
+        toast({
+          title: 'Erro',
+          description: 'Peça não encontrada',
+          variant: 'destructive',
+        });
+        return;
+      }
 
       const currentStock = part.current_stock;
       let newStock = currentStock;
@@ -125,19 +203,21 @@ const StockMovements: React.FC = () => {
       }
 
       // Criar a movimentação
+      const movementData = {
+        part_id: data.part_id,
+        movement_type: data.movement_type,
+        quantity: data.quantity,
+        previous_stock: currentStock,
+        new_stock: newStock,
+        unit_price: data.unit_price,
+        total_price: data.unit_price ? data.unit_price * data.quantity : null,
+        notes: data.notes,
+        created_by: user?.id,
+      };
+
       const { error: movementError } = await supabase
         .from('stock_movements')
-        .insert([{
-          part_id: data.part_id,
-          movement_type: data.movement_type,
-          quantity: data.quantity,
-          previous_stock: currentStock,
-          new_stock: newStock,
-          unit_price: data.unit_price,
-          total_price: data.unit_price ? data.unit_price * data.quantity : null,
-          notes: data.notes,
-          created_by: (await supabase.auth.getUser()).data.user?.id,
-        }]);
+        .insert([movementData]);
 
       if (movementError) throw movementError;
 

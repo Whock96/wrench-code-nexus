@@ -1,3 +1,4 @@
+
 // Interfaces para o módulo de estoque e peças
 export interface Part {
   id: string;
@@ -125,7 +126,6 @@ export interface InventoryStats {
   lowStockParts: number;
   outOfStockParts: number;
   totalValue: number;
-  totalMovements: number;
 }
 
 export interface StockAlert {
