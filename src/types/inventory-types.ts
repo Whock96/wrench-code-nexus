@@ -1,4 +1,3 @@
-
 // Interfaces para o módulo de estoque e peças
 export interface Part {
   id: string;
@@ -118,4 +117,31 @@ export interface SupplierFormData {
   tax_id?: string;
   payment_terms?: string;
   notes?: string;
+}
+
+// Tipos para dashboards e relatórios
+export interface InventoryStats {
+  totalParts: number;
+  lowStockParts: number;
+  outOfStockParts: number;
+  totalValue: number;
+  totalMovements: number;
+}
+
+export interface StockAlert {
+  id: string;
+  part_id: string;
+  part_name: string;
+  part_sku: string;
+  current_stock: number;
+  minimum_stock: number;
+  shortage: number;
+  priority: 'low' | 'medium' | 'high';
+}
+
+export interface MovementSummary {
+  type: 'entry' | 'exit' | 'adjustment' | 'return';
+  count: number;
+  totalQuantity: number;
+  totalValue: number;
 }

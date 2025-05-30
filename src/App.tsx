@@ -120,6 +120,10 @@ function App() {
             {/* Estoque */}
             <Route path="/inventory" element={<ProtectedRoute><InventoryDashboard /></ProtectedRoute>} />
             <Route path="/inventory/parts" element={<ProtectedRoute><PartsList /></ProtectedRoute>} />
+            <Route path="/inventory/parts/new" element={<ProtectedRoute><PartForm /></ProtectedRoute>} />
+            <Route path="/inventory/parts/:id" element={<ProtectedRoute><PartDetail /></ProtectedRoute>} />
+            <Route path="/inventory/parts/:id/edit" element={<ProtectedRoute><PartForm /></ProtectedRoute>} />
+            <Route path="/inventory/movements" element={<ProtectedRoute><StockMovements /></ProtectedRoute>} />
             
             {/* Relatórios */}
             <Route path="/reports" element={<ProtectedRoute><ReportsDashboard /></ProtectedRoute>} />

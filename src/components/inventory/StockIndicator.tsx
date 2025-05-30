@@ -21,25 +21,22 @@ export const StockIndicator: React.FC<StockIndicatorProps> = ({
       return {
         status: 'out-of-stock',
         label: 'Sem estoque',
-        color: 'bg-destructive',
-        textColor: 'text-destructive',
-        borderColor: 'border-destructive',
+        variant: 'destructive' as const,
+        color: 'bg-red-500',
       };
     } else if (currentStock < minimumStock) {
       return {
         status: 'low-stock',
         label: 'Estoque baixo',
+        variant: 'secondary' as const,
         color: 'bg-amber-500',
-        textColor: 'text-amber-500',
-        borderColor: 'border-amber-500',
       };
     } else {
       return {
         status: 'in-stock',
         label: 'Em estoque',
+        variant: 'default' as const,
         color: 'bg-green-500',
-        textColor: 'text-green-500',
-        borderColor: 'border-green-500',
       };
     }
   };
@@ -58,9 +55,9 @@ export const StockIndicator: React.FC<StockIndicatorProps> = ({
           <div className="flex items-center gap-2">
             <div className={`rounded-full ${status.color} ${sizeClasses[size]}`} />
             {showText && (
-              <span className={`text-sm ${status.textColor}`}>
+              <Badge variant={status.variant}>
                 {status.label} ({currentStock})
-              </span>
+              </Badge>
             )}
           </div>
         </TooltipTrigger>
