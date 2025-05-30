@@ -3,9 +3,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider } from "@/contexts/AuthContext";
-import { AppLayout } from "@/components/layout/AppLayout";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 
 // Import pages
 import Index from "./pages/Index";
@@ -29,12 +28,43 @@ import NotificationPreferencesPage from "./pages/settings/NotificationPreference
 import RegionalSettings from "./pages/settings/RegionalSettings";
 import ReportsDashboard from "./pages/reports/ReportsDashboard";
 import NotFound from "./pages/NotFound";
+import { AppLayout } from "@/components/layout/AppLayout";
 
-const queryClient = new QueryClient();
+// Import inventory pages
+import InventoryDashboard from "./pages/inventory/InventoryDashboard";
+import PartsList from "./pages/inventory/PartsList";
 
-// Component for protected routes
-const ProtectedRoute: React.FC<{ element: React.ReactNode }> = ({ element }) => {
-  return <AppLayout>{element}</AppLayout>;
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
+
+// Componente para rotas protegidas com verificação de autenticação
+interface ProtectedRouteProps {
+  children: React.ReactNode;
+}
+
+const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
+  const { user, isLoading } = useAuth();
+  const location = useLocation();
+
+  if (isLoading) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  return <>{children}</>;
 };
 
 const App = () => (
@@ -55,33 +85,209 @@ const App = () => (
             <Route path="/forgot-password" element={<ForgotPassword />} />
             
             {/* Protected routes */}
-            <Route path="/dashboard" element={<ProtectedRoute element={<Dashboard />} />} />
-            <Route path="/reports" element={<ProtectedRoute element={<ReportsDashboard />} />} />
+            <Route 
+              path="/dashboard" 
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <Dashboard />
+                  </AppLayout>
+                </ProtectedRoute>
+              } 
+            />
+            
+            <Route 
+              path="/reports" 
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <ReportsDashboard />
+                  </AppLayout>
+                </ProtectedRoute>
+              } 
+            />
             
             {/* Clients */}
-            <Route path="/clients" element={<ProtectedRoute element={<ClientList />} />} />
-            <Route path="/clients/new" element={<ProtectedRoute element={<ClientForm />} />} />
-            <Route path="/clients/:id" element={<ProtectedRoute element={<ClientDetail />} />} />
-            <Route path="/clients/:id/edit" element={<ProtectedRoute element={<ClientForm />} />} />
+            <Route 
+              path="/clients" 
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <ClientList />
+                  </AppLayout>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/clients/new" 
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <ClientForm />
+                  </AppLayout>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/clients/:id" 
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <ClientDetail />
+                  </AppLayout>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/clients/:id/edit" 
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <ClientForm />
+                  </AppLayout>
+                </ProtectedRoute>
+              } 
+            />
             
             {/* Vehicles */}
-            <Route path="/vehicles" element={<ProtectedRoute element={<VehicleList />} />} />
-            <Route path="/vehicles/new" element={<ProtectedRoute element={<VehicleForm />} />} />
-            <Route path="/vehicles/:id" element={<ProtectedRoute element={<VehicleDetail />} />} />
-            <Route path="/vehicles/:id/edit" element={<ProtectedRoute element={<VehicleForm />} />} />
+            <Route 
+              path="/vehicles" 
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <VehicleList />
+                  </AppLayout>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/vehicles/new" 
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <VehicleForm />
+                  </AppLayout>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/vehicles/:id" 
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <VehicleDetail />
+                  </AppLayout>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/vehicles/:id/edit" 
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <VehicleForm />
+                  </AppLayout>
+                </ProtectedRoute>
+              } 
+            />
             
             {/* Service Orders */}
-            <Route path="/service-orders" element={<ProtectedRoute element={<ServiceOrderList />} />} />
-            <Route path="/service-orders/new" element={<ProtectedRoute element={<ServiceOrderForm />} />} />
-            <Route path="/service-orders/:id" element={<ProtectedRoute element={<ServiceOrderDetail />} />} />
-            <Route path="/service-orders/:id/edit" element={<ProtectedRoute element={<ServiceOrderForm />} />} />
+            <Route 
+              path="/service-orders" 
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <ServiceOrderList />
+                  </AppLayout>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/service-orders/new" 
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <ServiceOrderForm />
+                  </AppLayout>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/service-orders/:id" 
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <ServiceOrderDetail />
+                  </AppLayout>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/service-orders/:id/edit" 
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <ServiceOrderForm />
+                  </AppLayout>
+                </ProtectedRoute>
+              } 
+            />
+            
+            {/* Inventory Routes */}
+            <Route 
+              path="/inventory" 
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <InventoryDashboard />
+                  </AppLayout>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/inventory/parts" 
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <PartsList />
+                  </AppLayout>
+                </ProtectedRoute>
+              } 
+            />
             
             {/* Notifications */}
-            <Route path="/notifications" element={<ProtectedRoute element={<NotificationCenter />} />} />
-            <Route path="/settings/notifications" element={<ProtectedRoute element={<NotificationPreferencesPage />} />} />
+            <Route 
+              path="/notifications" 
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <NotificationCenter />
+                  </AppLayout>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/settings/notifications" 
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <NotificationPreferencesPage />
+                  </AppLayout>
+                </ProtectedRoute>
+              } 
+            />
             
             {/* Settings */}
-            <Route path="/settings/regional" element={<ProtectedRoute element={<RegionalSettings />} />} />
+            <Route 
+              path="/settings/regional" 
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <RegionalSettings />
+                  </AppLayout>
+                </ProtectedRoute>
+              } 
+            />
             
             {/* 404 */}
             <Route path="*" element={<NotFound />} />

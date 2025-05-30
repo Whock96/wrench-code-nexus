@@ -369,12 +369,181 @@ export type Database = {
           },
         ]
       }
+      part_categories: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          name: string
+          parent_id: string | null
+          shop_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          parent_id?: string | null
+          shop_id: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          parent_id?: string | null
+          shop_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "part_categories_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "part_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "part_categories_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      part_suppliers: {
+        Row: {
+          cost_price: number | null
+          created_at: string | null
+          id: string
+          is_preferred: boolean | null
+          lead_time_days: number | null
+          minimum_order_quantity: number | null
+          part_id: string
+          supplier_id: string
+          supplier_sku: string | null
+        }
+        Insert: {
+          cost_price?: number | null
+          created_at?: string | null
+          id?: string
+          is_preferred?: boolean | null
+          lead_time_days?: number | null
+          minimum_order_quantity?: number | null
+          part_id: string
+          supplier_id: string
+          supplier_sku?: string | null
+        }
+        Update: {
+          cost_price?: number | null
+          created_at?: string | null
+          id?: string
+          is_preferred?: boolean | null
+          lead_time_days?: number | null
+          minimum_order_quantity?: number | null
+          part_id?: string
+          supplier_id?: string
+          supplier_sku?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "part_suppliers_part_id_fkey"
+            columns: ["part_id"]
+            isOneToOne: false
+            referencedRelation: "parts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "part_suppliers_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      parts: {
+        Row: {
+          barcode: string | null
+          category_id: string | null
+          compatible_models: string | null
+          cost_price: number
+          created_at: string | null
+          current_stock: number
+          description: string | null
+          id: string
+          image_url: string | null
+          location: string | null
+          manufacturer: string | null
+          minimum_stock: number
+          name: string
+          selling_price: number
+          shop_id: string
+          sku: string
+          updated_at: string | null
+        }
+        Insert: {
+          barcode?: string | null
+          category_id?: string | null
+          compatible_models?: string | null
+          cost_price: number
+          created_at?: string | null
+          current_stock?: number
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          location?: string | null
+          manufacturer?: string | null
+          minimum_stock?: number
+          name: string
+          selling_price: number
+          shop_id: string
+          sku: string
+          updated_at?: string | null
+        }
+        Update: {
+          barcode?: string | null
+          category_id?: string | null
+          compatible_models?: string | null
+          cost_price?: number
+          created_at?: string | null
+          current_stock?: number
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          location?: string | null
+          manufacturer?: string | null
+          minimum_stock?: number
+          name?: string
+          selling_price?: number
+          shop_id?: string
+          sku?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "parts_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "part_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "parts_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       service_items: {
         Row: {
           created_at: string | null
           description: string
           id: string
           item_type: string
+          part_id: string | null
           quantity: number
           service_order_id: string
           total_price: number | null
@@ -385,6 +554,7 @@ export type Database = {
           description: string
           id?: string
           item_type: string
+          part_id?: string | null
           quantity?: number
           service_order_id: string
           total_price?: number | null
@@ -395,12 +565,20 @@ export type Database = {
           description?: string
           id?: string
           item_type?: string
+          part_id?: string | null
           quantity?: number
           service_order_id?: string
           total_price?: number | null
           unit_price?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "service_items_part_id_fkey"
+            columns: ["part_id"]
+            isOneToOne: false
+            referencedRelation: "parts"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "service_items_service_order_id_fkey"
             columns: ["service_order_id"]
@@ -655,6 +833,62 @@ export type Database = {
           },
         ]
       }
+      stock_movements: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          id: string
+          movement_type: string
+          new_stock: number
+          notes: string | null
+          part_id: string
+          previous_stock: number
+          quantity: number
+          reference_id: string | null
+          reference_type: string | null
+          total_price: number | null
+          unit_price: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          movement_type: string
+          new_stock: number
+          notes?: string | null
+          part_id: string
+          previous_stock: number
+          quantity: number
+          reference_id?: string | null
+          reference_type?: string | null
+          total_price?: number | null
+          unit_price?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          movement_type?: string
+          new_stock?: number
+          notes?: string | null
+          part_id?: string
+          previous_stock?: number
+          quantity?: number
+          reference_id?: string | null
+          reference_type?: string | null
+          total_price?: number | null
+          unit_price?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_movements_part_id_fkey"
+            columns: ["part_id"]
+            isOneToOne: false
+            referencedRelation: "parts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subscription_plans: {
         Row: {
           created_at: string | null
@@ -741,6 +975,59 @@ export type Database = {
           },
           {
             foreignKeyName: "subscriptions_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      suppliers: {
+        Row: {
+          address: string | null
+          contact_name: string | null
+          created_at: string | null
+          email: string | null
+          id: string
+          name: string
+          notes: string | null
+          payment_terms: string | null
+          phone: string | null
+          shop_id: string
+          tax_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          address?: string | null
+          contact_name?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          payment_terms?: string | null
+          phone?: string | null
+          shop_id: string
+          tax_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          address?: string | null
+          contact_name?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          payment_terms?: string | null
+          phone?: string | null
+          shop_id?: string
+          tax_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "suppliers_shop_id_fkey"
             columns: ["shop_id"]
             isOneToOne: false
             referencedRelation: "shops"

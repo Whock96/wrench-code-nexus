@@ -1,94 +1,174 @@
 
-import { Home, Users, Car, Wrench, Bell, Settings, BarChart3, Globe } from "lucide-react";
-import { useLocation, useNavigate } from "react-router-dom";
+import React from "react";
+import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import {
+  LayoutDashboard,
+  Users,
+  Car,
+  FileText,
+  Package,
+  Settings,
+  Bell,
+  BarChart3,
+  Wrench,
+  Building,
+  ChevronDown,
+  ChevronRight,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useShop } from "@/hooks/useShop";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { useState } from "react";
 
-interface SidebarMenuProps {
-  onNavigate?: (path: string) => void;
-}
-
-interface NavItemProps {
-  href: string;
+interface NavItem {
+  title: string;
+  href?: string;
   icon: React.ReactNode;
-  label: string;
-  onClick: () => void;
-  isActive?: boolean;
+  items?: { title: string; href: string }[];
 }
 
-const NavItem = ({ href, icon, label, onClick, isActive }: NavItemProps) => (
-  <Button
-    variant={isActive ? "secondary" : "ghost"}
-    className={cn(
-      "w-full justify-start",
-      isActive && "bg-secondary"
-    )}
-    onClick={onClick}
-  >
-    {icon}
-    <span className="ml-2">{label}</span>
-  </Button>
-);
+const navItems: NavItem[] = [
+  {
+    title: "Dashboard",
+    href: "/dashboard",
+    icon: <LayoutDashboard className="h-5 w-5" />,
+  },
+  {
+    title: "Clientes",
+    href: "/clients",
+    icon: <Users className="h-5 w-5" />,
+  },
+  {
+    title: "Veículos",
+    href: "/vehicles",
+    icon: <Car className="h-5 w-5" />,
+  },
+  {
+    title: "Ordens de Serviço",
+    href: "/service-orders",
+    icon: <FileText className="h-5 w-5" />,
+  },
+  {
+    title: "Estoque",
+    icon: <Package className="h-5 w-5" />,
+    items: [
+      { title: "Dashboard", href: "/inventory" },
+      { title: "Peças", href: "/inventory/parts" },
+      { title: "Categorias", href: "/inventory/categories" },
+      { title: "Movimentações", href: "/inventory/movements" },
+      { title: "Fornecedores", href: "/inventory/suppliers" },
+    ],
+  },
+  {
+    title: "Relatórios",
+    href: "/reports",
+    icon: <BarChart3 className="h-5 w-5" />,
+  },
+  {
+    title: "Notificações",
+    href: "/notifications",
+    icon: <Bell className="h-5 w-5" />,
+  },
+  {
+    title: "Configurações",
+    icon: <Settings className="h-5 w-5" />,
+    items: [
+      { title: "Regional", href: "/settings/regional" },
+      { title: "Notificações", href: "/settings/notifications" },
+    ],
+  },
+];
 
-export const SidebarMenu = ({ onNavigate }: SidebarMenuProps) => {
+export const SidebarMenu: React.FC = () => {
   const location = useLocation();
-  const navigate = useNavigate();
+  const [openItems, setOpenItems] = useState<string[]>(['Estoque', 'Configurações']);
 
-  const handleNavigate = (path: string) => {
-    if (onNavigate) {
-      onNavigate(path);
-    } else {
-      navigate(path);
-    }
+  const toggleItem = (title: string) => {
+    setOpenItems(prev => 
+      prev.includes(title) 
+        ? prev.filter(item => item !== title)
+        : [...prev, title]
+    );
   };
 
-  const menuItems = [
-    { href: "/dashboard", icon: <Home className="h-4 w-4" />, label: "Dashboard" },
-    { href: "/clients", icon: <Users className="h-4 w-4" />, label: "Clientes" },
-    { href: "/vehicles", icon: <Car className="h-4 w-4" />, label: "Veículos" },
-    { href: "/service-orders", icon: <Wrench className="h-4 w-4" />, label: "Ordens de Serviço" },
-    { href: "/notifications", icon: <Bell className="h-4 w-4" />, label: "Notificações" },
-    { href: "/reports", icon: <BarChart3 className="h-4 w-4" />, label: "Relatórios" },
-  ];
-
-  const settingsItems = [
-    { href: "/settings/notifications", icon: <Bell className="h-4 w-4" />, label: "Notificações" },
-    { href: "/settings/regional", icon: <Globe className="h-4 w-4" />, label: "Configurações Regionais" },
-  ];
+  const isActive = (href: string) => {
+    return location.pathname === href || location.pathname.startsWith(href + '/');
+  };
 
   return (
-    <div className="px-3 py-2">
-      <div className="space-y-1">
-        {menuItems.map((item) => (
-          <NavItem
-            key={item.href}
-            href={item.href}
-            icon={item.icon}
-            label={item.label}
-            onClick={() => handleNavigate(item.href)}
-            isActive={location.pathname === item.href}
-          />
-        ))}
+    <aside className="fixed left-0 top-0 z-40 h-screen w-64 border-r border-border bg-card">
+      <div className="flex h-16 items-center border-b px-6">
+        <Link to="/dashboard" className="flex items-center space-x-2">
+          <Building className="h-6 w-6" />
+          <span className="font-semibold">ASMS</span>
+        </Link>
       </div>
-      
-      <div className="mt-6">
-        <h2 className="mb-2 px-4 text-lg font-semibold tracking-tight">
-          Configurações
-        </h2>
-        <div className="space-y-1">
-          {settingsItems.map((item) => (
-            <NavItem
+      <nav className="space-y-2 p-4 overflow-y-auto h-[calc(100vh-4rem)]">
+        {navItems.map((item) => {
+          if (item.items) {
+            const isOpen = openItems.includes(item.title);
+            const hasActiveChild = item.items.some(subItem => isActive(subItem.href));
+            
+            return (
+              <Collapsible key={item.title} open={isOpen} onOpenChange={() => toggleItem(item.title)}>
+                <CollapsibleTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    className={cn(
+                      "w-full justify-between",
+                      hasActiveChild && "bg-accent text-accent-foreground"
+                    )}
+                  >
+                    <div className="flex items-center">
+                      {item.icon}
+                      <span className="ml-3">{item.title}</span>
+                    </div>
+                    {isOpen ? (
+                      <ChevronDown className="h-4 w-4" />
+                    ) : (
+                      <ChevronRight className="h-4 w-4" />
+                    )}
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="space-y-1 ml-6 mt-1">
+                  {item.items.map((subItem) => (
+                    <Button
+                      key={subItem.href}
+                      variant="ghost"
+                      className={cn(
+                        "w-full justify-start",
+                        isActive(subItem.href) && "bg-accent text-accent-foreground"
+                      )}
+                      asChild
+                    >
+                      <Link to={subItem.href}>
+                        {subItem.title}
+                      </Link>
+                    </Button>
+                  ))}
+                </CollapsibleContent>
+              </Collapsible>
+            );
+          }
+
+          return (
+            <Button
               key={item.href}
-              href={item.href}
-              icon={item.icon}
-              label={item.label}
-              onClick={() => handleNavigate(item.href)}
-              isActive={location.pathname === item.href}
-            />
-          ))}
-        </div>
-      </div>
-    </div>
+              variant="ghost"
+              className={cn(
+                "w-full justify-start",
+                item.href && isActive(item.href) && "bg-accent text-accent-foreground"
+              )}
+              asChild
+            >
+              <Link to={item.href!}>
+                {item.icon}
+                <span className="ml-3">{item.title}</span>
+              </Link>
+            </Button>
+          );
+        })}
+      </nav>
+    </aside>
   );
 };

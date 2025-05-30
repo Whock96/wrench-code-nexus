@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -7,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Edit, FileText, QrCode } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { ServiceOrderDetailWithRelations, SERVICE_ORDER_STATUS_MAP, StatusHistoryItem } from "@/types/supabase";
+import { ServiceOrderDetailWithRelations, SERVICE_ORDER_STATUS_MAP, ServiceOrderStatusHistory } from "@/types/supabase";
 import { QRCodeGenerator } from "@/components/service-orders/QRCodeGenerator";
 import { StatusHistoryTimeline } from "@/components/service-orders/StatusHistoryTimeline";
 
@@ -15,7 +14,7 @@ const ServiceOrderDetail: React.FC = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [serviceOrder, setServiceOrder] = useState<ServiceOrderDetailWithRelations | null>(null);
-  const [statusHistory, setStatusHistory] = useState<StatusHistoryItem[]>([]);
+  const [statusHistory, setStatusHistory] = useState<ServiceOrderStatusHistory[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isUpdatingAccess, setIsUpdatingAccess] = useState(false);
 
@@ -43,21 +42,21 @@ const ServiceOrderDetail: React.FC = () => {
       if (orderError) throw orderError;
 
       if (orderData) {
-        setServiceOrder(orderData as ServiceOrderDetailWithRelations);
-        
         // Processar histórico de status - CORRIGIDO para usar campos corretos
         const history = (orderData.service_order_status_history || []).map((item: any) => ({
           id: item.id,
           service_order_id: item.service_order_id,
           status: item.status,
           change_reason: item.change_reason,
-          created_at: item.changed_at || item.created_at, // Compatibilidade com ambos os nomes
-          created_by: item.changed_by || item.created_by, // Compatibilidade com ambos os nomes
-        })) as StatusHistoryItem[];
+          created_at: item.changed_at || item.created_at, // Usar changed_at do banco ou created_at como fallback
+          created_by: item.changed_by || item.created_by, // Usar changed_by do banco ou created_by como fallback
+        })) as ServiceOrderStatusHistory[];
         
         setStatusHistory(history.sort((a, b) => 
           new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
         ));
+
+        setServiceOrder(orderData as ServiceOrderDetailWithRelations);
       }
     } catch (error: any) {
       console.error("Error loading service order:", error);
