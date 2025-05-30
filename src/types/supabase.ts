@@ -55,7 +55,7 @@ export interface ServiceItem {
   unit_price: number;
   total_price: number;
   service_order_id?: string;
-  part_id?: string | null; // Adicionado para integração com estoque
+  part_id?: string | null;
   created_at?: string;
 }
 

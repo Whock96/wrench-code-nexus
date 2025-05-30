@@ -4,14 +4,15 @@ import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuLabel, 
+  DropdownMenuSeparator, 
+  DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
+import { NotificationDropdown } from "./NotificationDropdown";
 
 export const Navbar: React.FC = () => {
   const { user, logout, isAuthenticated } = useAuth();
@@ -30,26 +31,21 @@ export const Navbar: React.FC = () => {
 
   const getUserInitials = (): string => {
     if (!user) return "U";
-    
     if (user.firstName && user.lastName) {
       return getInitials(user.firstName, user.lastName);
     }
-    
     if (user.full_name) {
       const names = user.full_name.split(" ");
       if (names.length === 1) return names[0].charAt(0).toUpperCase();
       return (names[0].charAt(0) + names[names.length - 1].charAt(0)).toUpperCase();
     }
-    
     return user.email?.charAt(0).toUpperCase() || "U";
   };
 
   const getUserDisplayName = (): string => {
     if (!user) return "Usuário";
-    
     if (user.full_name) return user.full_name;
     if (user.firstName && user.lastName) return `${user.firstName} ${user.lastName}`;
-    
     return user.email || "Usuário";
   };
 
@@ -57,7 +53,7 @@ export const Navbar: React.FC = () => {
     <nav className="bg-card border-b border-border sticky top-0 z-10">
       <div className="px-4 md:px-6 py-3 flex items-center justify-between">
         <div className="flex items-center">
-          <Link to="/" className="flex items-center">
+          <Link to={isAuthenticated ? "/dashboard" : "/"} className="flex items-center">
             <span className="md:hidden text-xl font-semibold text-foreground">
               ASMS
             </span>
@@ -68,6 +64,8 @@ export const Navbar: React.FC = () => {
         </div>
 
         <div className="flex items-center space-x-4">
+          {isAuthenticated && <NotificationDropdown />}
+          
           {isAuthenticated ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -90,6 +88,9 @@ export const Navbar: React.FC = () => {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
                   <Link to="/settings/regional">Configurações</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/settings/notifications">Preferências de Notificação</Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleLogout}>
