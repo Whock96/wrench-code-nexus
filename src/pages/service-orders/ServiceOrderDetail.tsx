@@ -42,18 +42,18 @@ const ServiceOrderDetail: React.FC = () => {
       if (orderError) throw orderError;
 
       if (orderData) {
-        // Processar histórico de status - CORRIGIDO para usar campos corretos
+        // Processar histórico de status - CORRIGIDO para usar campos corretos do banco
         const history = (orderData.service_order_status_history || []).map((item: any) => ({
           id: item.id,
           service_order_id: item.service_order_id,
           status: item.status,
           change_reason: item.change_reason,
-          created_at: item.changed_at || item.created_at, // Usar changed_at do banco ou created_at como fallback
-          created_by: item.changed_by || item.created_by, // Usar changed_by do banco ou created_by como fallback
+          changed_at: item.changed_at, // Usar o campo correto do banco
+          changed_by: item.changed_by, // Usar o campo correto do banco
         })) as ServiceOrderStatusHistory[];
         
         setStatusHistory(history.sort((a, b) => 
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+          new Date(b.changed_at).getTime() - new Date(a.changed_at).getTime()
         ));
 
         setServiceOrder(orderData as ServiceOrderDetailWithRelations);

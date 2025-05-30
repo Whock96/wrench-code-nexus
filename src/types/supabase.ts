@@ -55,17 +55,18 @@ export interface ServiceItem {
   unit_price: number;
   total_price: number;
   service_order_id?: string;
+  part_id?: string | null; // Adicionado para integração com estoque
   created_at?: string;
 }
 
-// Tipos para histórico de status - CORRIGIDO
+// Tipos para histórico de status - CORRIGIDO para usar campos do banco de dados
 export interface StatusHistoryItem {
   id: string;
   service_order_id: string;
   status: string;
   change_reason?: string | null;
-  created_at: string; // Corrigido: era 'changed_at' mas o DB usa 'created_at'
-  created_by?: string | null; // Corrigido: era 'changed_by' mas o DB usa 'created_by'
+  changed_at: string; // Corrigido: usar changed_at do banco
+  changed_by?: string | null; // Corrigido: usar changed_by do banco
 }
 
 export interface ServiceOrderStatusHistory {
@@ -73,8 +74,8 @@ export interface ServiceOrderStatusHistory {
   service_order_id: string;
   status: string;
   change_reason?: string | null;
-  created_at: string; // Corrigido para coincidir com o schema do DB
-  created_by?: string | null; // Corrigido para coincidir com o schema do DB
+  changed_at: string; // Corrigido para coincidir com o schema do DB
+  changed_by?: string | null; // Corrigido para coincidir com o schema do DB
 }
 
 // Tipos para dashboard

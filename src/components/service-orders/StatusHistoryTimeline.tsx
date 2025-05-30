@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 interface StatusHistoryItem {
   id: string;
   status: string;
-  created_at: string;
+  changed_at: string; // Corrigido: usar changed_at do banco
   change_reason?: string | null;
 }
 
@@ -45,7 +45,7 @@ export const StatusHistoryTimeline: React.FC<StatusHistoryTimelineProps> = ({
 
   // Ordenar do mais recente para o mais antigo
   const sortedHistory = [...history].sort(
-    (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    (a, b) => new Date(b.changed_at).getTime() - new Date(a.changed_at).getTime()
   );
 
   return (
@@ -66,7 +66,7 @@ export const StatusHistoryTimeline: React.FC<StatusHistoryTimelineProps> = ({
                   <div className="flex items-center gap-2">
                     <Badge variant={statusInfo.variant}>{statusInfo.label}</Badge>
                     <span className="text-sm text-muted-foreground">
-                      {new Date(item.created_at).toLocaleString()}
+                      {new Date(item.changed_at).toLocaleString()}
                     </span>
                   </div>
                   {item.change_reason && (
