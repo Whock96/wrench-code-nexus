@@ -58,14 +58,14 @@ export interface ServiceItem {
   created_at?: string;
 }
 
-// Tipos para histórico de status
+// Tipos para histórico de status - CORRIGIDO
 export interface StatusHistoryItem {
   id: string;
   service_order_id: string;
   status: string;
   change_reason?: string | null;
-  created_at: string;
-  created_by?: string | null;
+  created_at: string; // Corrigido: era 'changed_at' mas o DB usa 'created_at'
+  created_by?: string | null; // Corrigido: era 'changed_by' mas o DB usa 'created_by'
 }
 
 export interface ServiceOrderStatusHistory {
@@ -73,8 +73,8 @@ export interface ServiceOrderStatusHistory {
   service_order_id: string;
   status: string;
   change_reason?: string | null;
-  created_at: string;
-  created_by?: string | null;
+  created_at: string; // Corrigido para coincidir com o schema do DB
+  created_by?: string | null; // Corrigido para coincidir com o schema do DB
 }
 
 // Tipos para dashboard
